@@ -176,8 +176,20 @@ const Matches = () => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-6"
+      className="relative space-y-6 overflow-hidden"
     >
+      {/* Subtle animated background */}
+      <motion.div
+        aria-hidden
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 0.12 }}
+        transition={{ duration: 1 }}
+        className="pointer-events-none absolute inset-0 -z-10"
+      >
+        <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-primary blur-3xl opacity-30" />
+        <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-accent blur-3xl opacity-30" />
+      </motion.div>
+
       {/* Header */}
       <motion.div variants={itemVariants}>
         <h1 className="text-3xl font-bold text-foreground mb-2">Find Your Match</h1>
@@ -186,7 +198,7 @@ const Matches = () => {
 
       {/* Search and Filters */}
       <motion.div variants={itemVariants}>
-        <Card>
+        <Card className="bg-card/80 backdrop-blur-sm border border-border/50">
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row gap-4">
               {/* Search */}
@@ -228,14 +240,14 @@ const Matches = () => {
 
       {/* Co-founder Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCoFounders.map((person, index) => (
+        {filteredCoFounders.map((person) => (
           <motion.div
             key={person.id}
             variants={itemVariants}
             whileHover={{ y: -5 }}
             transition={{ duration: 0.2 }}
           >
-            <Card className="h-full hover:shadow-lg transition-shadow">
+            <Card className="h-full hover:shadow-lg transition-shadow bg-card/80 backdrop-blur-sm border border-border/50">
               <CardHeader>
                 {/* Avatar and Basic Info */}
                 <div className="flex items-start justify-between">
@@ -244,13 +256,13 @@ const Matches = () => {
                       {person.avatar}
                     </div>
                     <div>
-                      <CardTitle className="text-lg">{person.name}</CardTitle>
-                      <CardDescription className="text-sm">{person.title}</CardDescription>
+                      <CardTitle className="text-lg text-foreground">{person.name}</CardTitle>
+                      <CardDescription className="text-sm text-muted-foreground">{person.title}</CardDescription>
                     </div>
                   </div>
                   <div className="flex items-center space-x-1">
                     <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span className="text-sm font-medium">{person.rating}</span>
+                    <span className="text-sm font-medium text-foreground">{person.rating}</span>
                   </div>
                 </div>
 
@@ -269,7 +281,7 @@ const Matches = () => {
                 
                 {/* Skills */}
                 <div>
-                  <p className="text-sm font-medium mb-2">Skills:</p>
+                  <p className="text-sm font-medium mb-2 text-foreground">Skills:</p>
                   <div className="flex flex-wrap gap-1">
                     {person.skills.slice(0, 4).map((skill) => (
                       <span
@@ -296,7 +308,7 @@ const Matches = () => {
                 {/* Looking For */}
                 <div className="p-3 bg-muted/50 rounded-lg">
                   <p className="text-xs font-medium text-muted-foreground mb-1">Looking for:</p>
-                  <p className="text-sm">{person.lookingFor}</p>
+                  <p className="text-sm text-foreground">{person.lookingFor}</p>
                 </div>
 
                 {/* Actions */}
@@ -312,13 +324,17 @@ const Matches = () => {
                   
                   <div className="flex gap-1">
                     {person.githubUrl && (
-                      <Button variant="outline" size="sm" className="p-2">
-                        <Github className="h-4 w-4" />
+                      <Button asChild variant="outline" size="sm" className="p-2">
+                        <a href={person.githubUrl} target="_blank" rel="noopener noreferrer">
+                          <Github className="h-4 w-4" />
+                        </a>
                       </Button>
                     )}
                     
-                    <Button variant="outline" size="sm" className="p-2">
-                      <Linkedin className="h-4 w-4" />
+                    <Button asChild variant="outline" size="sm" className="p-2">
+                      <a href={person.linkedinUrl} target="_blank" rel="noopener noreferrer">
+                        <Linkedin className="h-4 w-4" />
+                      </a>
                     </Button>
                     
                     <Button variant="outline" size="sm" className="p-2">
@@ -335,10 +351,10 @@ const Matches = () => {
       {/* Empty State */}
       {filteredCoFounders.length === 0 && (
         <motion.div variants={itemVariants}>
-          <Card>
+          <Card className="bg-card/80 backdrop-blur-sm border border-border/50">
             <CardContent className="text-center py-12">
               <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No matches found</h3>
+              <h3 className="text-lg font-medium mb-2 text-foreground">No matches found</h3>
               <p className="text-muted-foreground mb-4">
                 Try adjusting your search terms or filters to find more co-founders.
               </p>

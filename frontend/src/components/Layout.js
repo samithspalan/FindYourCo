@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useLocation, Outlet } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Home, 
   LayoutDashboard,
@@ -22,7 +22,7 @@ const Layout = () => {
   const location = useLocation();
 
   const navigation = [
-    { name: 'Home', href: '/', icon: Home },
+    { name: 'Home', href: '/home', icon: Home },
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Create Post', href: '/post-idea', icon: PlusCircle },
     { name: 'Matches', href: '/matches', icon: Users },
@@ -72,7 +72,7 @@ const Layout = () => {
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:text-foreground hover:bg-accent"
                     )}
-                    end={item.href === '/'}
+                    end={item.href === '/home'}
                     aria-label={item.name}
                   >
                     <Icon className="mr-3 h-5 w-5" />
@@ -100,17 +100,40 @@ const Layout = () => {
             </Button>
             
             <div className="ml-auto">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleTheme}
-              >
-                {theme === 'dark' ? (
-                  <Sun className="h-5 w-5" />
-                ) : (
-                  <Moon className="h-5 w-5" />
-                )}
-              </Button>
+              <motion.div whileTap={{ scale: 0.95 }}>
+                <Button
+                  aria-label="Toggle theme"
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleTheme}
+                >
+                  <AnimatePresence mode="wait" initial={false}>
+                    {theme === 'dark' ? (
+                      <motion.span
+                        key="sun"
+                        initial={{ opacity: 0, rotate: -90, scale: 0.8 }}
+                        animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                        exit={{ opacity: 0, rotate: 90, scale: 0.8 }}
+                        transition={{ duration: 0.2 }}
+                        className="flex"
+                      >
+                        <Sun className="h-5 w-5" />
+                      </motion.span>
+                    ) : (
+                      <motion.span
+                        key="moon"
+                        initial={{ opacity: 0, rotate: 90, scale: 0.8 }}
+                        animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                        exit={{ opacity: 0, rotate: -90, scale: 0.8 }}
+                        transition={{ duration: 0.2 }}
+                        className="flex"
+                      >
+                        <Moon className="h-5 w-5" />
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </Button>
+              </motion.div>
             </div>
           </div>
         </header>

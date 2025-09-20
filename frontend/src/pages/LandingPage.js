@@ -1,11 +1,12 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Github, ArrowRight, Users, Zap, Target } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 
 const LandingPage = () => {
+  const navigate = useNavigate();
   const features = [
     {
       icon: Users,
@@ -25,7 +26,19 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen bg-background overflow-hidden">
+      {/* Animated background blobs */}
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 0.2 }}
+        transition={{ duration: 1 }}
+      >
+        <div className="absolute -top-24 -left-24 w-80 h-80 rounded-full bg-primary blur-3xl opacity-30" />
+        <div className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-accent blur-3xl opacity-30" />
+      </motion.div>
+
       {/* Hero Section */}
       <section className="relative py-20 lg:py-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -37,7 +50,7 @@ const LandingPage = () => {
             >
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6">
                 Find Your Perfect
-                <span className="text-primary"> Co-Founder</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-foreground/70"> Co-Founder</span>
               </h1>
               
               <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
@@ -52,14 +65,14 @@ const LandingPage = () => {
               transition={{ duration: 0.7, delay: 0.2 }}
               className="flex flex-col sm:flex-row gap-4 justify-center items-center"
             >
-              <Button size="lg" className="text-lg px-8 py-4">
+              <Button size="lg" className="text-lg px-8 py-4" onClick={() => navigate('/dashboard')}>
                 <Github className="mr-2 h-5 w-5" />
-                Login with GitHub
+                Login with GitHub (Demo)
               </Button>
               
-              <Link to="/dashboard">
+              <Link to="/matches">
                 <Button variant="outline" size="lg" className="text-lg px-8 py-4">
-                  Explore Dashboard
+                  Explore Matches
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
@@ -94,8 +107,9 @@ const LandingPage = () => {
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.7, delay: 0.1 * (index + 1) }}
+                  whileHover={{ y: -5 }}
                 >
-                  <Card className="text-center h-full hover:shadow-lg transition-shadow">
+                  <Card className="text-center h-full hover:shadow-lg transition-shadow bg-card/80 backdrop-blur-sm border border-border/50">
                     <CardHeader>
                       <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
                         <Icon className="h-6 w-6 text-primary" />
@@ -103,7 +117,7 @@ const LandingPage = () => {
                       <CardTitle>{feature.title}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <CardDescription className="text-base">
+                      <CardDescription className="text-base text-muted-foreground">
                         {feature.description}
                       </CardDescription>
                     </CardContent>
@@ -129,9 +143,9 @@ const LandingPage = () => {
             <p className="text-xl text-muted-foreground mb-8">
               Join thousands of entrepreneurs who have already found their perfect match.
             </p>
-            <Button size="lg" className="text-lg px-12 py-4">
+            <Button size="lg" className="text-lg px-12 py-4" onClick={() => navigate('/dashboard')}>
               <Github className="mr-2 h-5 w-5" />
-              Get Started Now
+              Get Started (Demo Login)
             </Button>
           </motion.div>
         </div>

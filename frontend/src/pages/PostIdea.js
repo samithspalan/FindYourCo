@@ -101,8 +101,20 @@ const PostIdea = () => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="max-w-4xl mx-auto space-y-6"
+      className="relative max-w-4xl mx-auto space-y-6 overflow-hidden"
     >
+      {/* Subtle animated background */}
+      <motion.div
+        aria-hidden
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 0.12 }}
+        transition={{ duration: 1 }}
+        className="pointer-events-none absolute inset-0 -z-10"
+      >
+        <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-primary blur-3xl opacity-30" />
+        <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-accent blur-3xl opacity-30" />
+      </motion.div>
+
       {/* Header */}
       <motion.div variants={itemVariants}>
         <h1 className="text-3xl font-bold text-foreground mb-2">Post Your Idea</h1>
@@ -111,13 +123,13 @@ const PostIdea = () => {
 
       {/* Main Form */}
       <motion.div variants={itemVariants}>
-        <Card>
+        <Card className="bg-card/80 backdrop-blur-sm border border-border/50">
           <CardHeader>
-            <CardTitle className="flex items-center">
+            <CardTitle className="flex items-center text-foreground">
               <Lightbulb className="mr-2 h-6 w-6 text-yellow-500" />
               Project Details
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-muted-foreground">
               Describe your idea in detail to attract the right co-founder match.
             </CardDescription>
           </CardHeader>
@@ -128,15 +140,17 @@ const PostIdea = () => {
                 <label htmlFor="title" className="text-sm font-medium text-foreground">
                   Project Title *
                 </label>
-                <Input
-                  id="title"
-                  name="title"
-                  placeholder="e.g., AI-Powered Task Management App"
-                  value={formData.title}
-                  onChange={handleInputChange}
-                  required
-                  className="text-lg"
-                />
+                <motion.div whileFocus={{ scale: 1.01 }}>
+                  <Input
+                    id="title"
+                    name="title"
+                    placeholder="e.g., AI-Powered Task Management App"
+                    value={formData.title}
+                    onChange={handleInputChange}
+                    required
+                    className="text-lg"
+                  />
+                </motion.div>
               </div>
 
               {/* Description */}
@@ -144,15 +158,17 @@ const PostIdea = () => {
                 <label htmlFor="description" className="text-sm font-medium text-foreground">
                   Project Description *
                 </label>
-                <Textarea
-                  id="description"
-                  name="description"
-                  placeholder="Describe your idea, target market, unique value proposition, and any existing progress..."
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  required
-                  className="min-h-[120px] resize-none"
-                />
+                <motion.div whileFocus={{ scale: 1.01 }}>
+                  <Textarea
+                    id="description"
+                    name="description"
+                    placeholder="Describe your idea, target market, unique value proposition, and any existing progress..."
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    required
+                    className="min-h-[120px] resize-none"
+                  />
+                </motion.div>
                 <p className="text-xs text-muted-foreground">
                   {formData.description.length}/500 characters
                 </p>
@@ -257,9 +273,9 @@ const PostIdea = () => {
 
       {/* Tips Card */}
       <motion.div variants={itemVariants}>
-        <Card>
+        <Card className="bg-card/80 backdrop-blur-sm border border-border/50">
           <CardHeader>
-            <CardTitle className="text-lg">Tips for a Great Post</CardTitle>
+            <CardTitle className="text-lg text-foreground">Tips for a Great Post</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2 text-sm text-muted-foreground">

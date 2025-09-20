@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import PostIdea from './pages/PostIdea';
 import Matches from './pages/Matches';
 import Chat from './pages/Chat';
+import Home from './pages/Home';
 import './index.css';
 
 function App() {
@@ -15,8 +16,13 @@ function App() {
       <Router>
         <Routes>
           <Route element={<Layout />}>
+            {/* Root shows marketing Landing page */}
             <Route index element={<LandingPage />} />
+            {/* Dashboard */}
             <Route path="/dashboard" element={<Dashboard />} />
+            {/* Home Feed */}
+            <Route path="/home" element={<Home />} />
+            {/* Other sections */}
             <Route path="/post-idea" element={<PostIdea />} />
             <Route path="/matches" element={<Matches />} />
             <Route path="/chat" element={<Chat />} />
