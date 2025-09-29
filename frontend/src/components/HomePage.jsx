@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Button, 
   Container, 
@@ -8,7 +8,17 @@ import {
   CardContent,
   Grid,
   Chip,
-  IconButton
+  IconButton,
+  Tab,
+  Tabs,
+  Avatar,
+  LinearProgress,
+  Skeleton,
+  TextField,
+  InputAdornment,
+  Fade,
+  Slide,
+  Zoom
 } from '@mui/material';
 import {
   GitHub,
@@ -19,17 +29,47 @@ import {
   ArrowForward,
   Star,
   Code,
-  Business
+  Business,
+  Email,
+  Twitter,
+  LinkedIn,
+  PlayArrow,
+  CheckCircle,
+  Timeline,
+  Speed,
+  Security,
+  Analytics
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
 const HomePage = () => {
   const navigate = useNavigate();
   const [hoveredCard, setHoveredCard] = useState(null);
+  const [activeTab, setActiveTab] = useState(0);
+  const [currentTestimonial, setCurrentTestimonial] = useState(0);
+  const [liveStats, setLiveStats] = useState({ users: 10000, ideas: 2500, teams: 500, startups: 150 });
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [subscribed, setSubscribed] = useState(false);
+  const [showProgress, setShowProgress] = useState(false);
 
   const handleGitHubLogin = () => {
-    // For now, just navigate to dashboard (dummy)
-    navigate('/dashboard');
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      navigate('/dashboard');
+    }, 1500);
+  };
+
+  const handleSubscribe = async () => {
+    if (!email) return;
+    setLoading(true);
+    setShowProgress(true);
+    setTimeout(() => {
+      setLoading(false);
+      setSubscribed(true);
+      setShowProgress(false);
+    }, 2000);
   };
 
   const features = [
@@ -60,11 +100,86 @@ const HomePage = () => {
   ];
 
   const stats = [
-    { number: "10K+", label: "Active Users" },
-    { number: "2.5K+", label: "Ideas Shared" },
-    { number: "500+", label: "Teams Formed" },
-    { number: "150+", label: "Startups Launched" }
+    { number: `${Math.floor(liveStats.users/1000)}K+`, label: "Active Users" },
+    { number: `${Math.floor(liveStats.ideas/1000*10)/10}K+`, label: "Ideas Shared" },
+    { number: `${liveStats.teams}+`, label: "Teams Formed" },
+    { number: `${liveStats.startups}+`, label: "Startups Launched" }
   ];
+
+  const testimonials = [
+    {
+      name: "Sarah Chen",
+      role: "CEO, TechFlow",
+      avatar: "SC",
+      content: "Found my perfect co-founder in just 2 weeks. The AI matching is incredible!",
+      company: "$2M raised"
+    },
+    {
+      name: "Marcus Rodriguez",
+      role: "CTO, DataSync",
+      avatar: "MR",
+      content: "The platform's idea validation features saved us months of development time.",
+      company: "500K users"
+    },
+    {
+      name: "Emily Watson",
+      role: "Founder, EcoTrack",
+      avatar: "EW",
+      content: "Connected with amazing talent. Our team went from 1 to 15 people!",
+      company: "Series A"
+    }
+  ];
+
+  const tabData = [
+    {
+      label: "For Founders",
+      icon: <RocketLaunch />,
+      content: {
+        title: "Built for ambitious founders",
+        description: "Share your vision, validate ideas, and find the perfect co-founder to build your dream startup.",
+        features: ["AI-powered matching", "Idea validation tools", "Investor network access"]
+      }
+    },
+    {
+      label: "For Developers",
+      icon: <Code />,
+      content: {
+        title: "Connect with visionary leaders",
+        description: "Find exciting projects that match your skills and join founding teams building the future.",
+        features: ["Skill-based matching", "Equity opportunities", "Technical challenges"]
+      }
+    },
+    {
+      label: "For Investors",
+      icon: <TrendingUp />,
+      content: {
+        title: "Discover the next unicorn",
+        description: "Get early access to validated ideas and founding teams with proven traction.",
+        features: ["Deal flow pipeline", "Team analysis", "Market insights"]
+      }
+    }
+  ];
+
+  // Live stats simulation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLiveStats(prev => ({
+        users: prev.users + Math.floor(Math.random() * 3),
+        ideas: prev.ideas + Math.floor(Math.random() * 2),
+        teams: prev.teams + (Math.random() > 0.8 ? 1 : 0),
+        startups: prev.startups + (Math.random() > 0.9 ? 1 : 0)
+      }));
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Auto-advance testimonials
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTestimonial(prev => (prev + 1) % testimonials.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [testimonials.length]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -171,92 +286,612 @@ const HomePage = () => {
       <section className="py-20 px-4">
         <Container maxWidth="lg">
           <div className="text-center mb-16">
-            <Typography 
-              variant="h2" 
-              className="text-3xl md:text-5xl font-bold text-white mb-6"
-            >
-              Everything you need to
-              <span className="bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent"> succeed</span>
-            </Typography>
-            <Typography 
-              variant="h6" 
-              className="text-gray-300 max-w-2xl mx-auto"
-            >
-              From idea validation to team formation, we've got you covered
-            </Typography>
+            <Fade in timeout={1000}>
+              <div>
+                <Chip 
+                  label="✨ Core Features" 
+                  sx={{
+                    background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(59, 130, 246, 0.2))',
+                    color: 'white',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    mb: 4,
+                    fontWeight: 'bold'
+                  }}
+                />
+                <Typography 
+                  variant="h2" 
+                  className="text-3xl md:text-5xl font-bold text-white mb-6"
+                  sx={{ 
+                    background: 'linear-gradient(135deg, #10b981, #3b82f6)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    color: 'transparent',
+                    fontWeight: 900,
+                    letterSpacing: '-0.025em'
+                  }}
+                >
+                  Everything you need to succeed
+                </Typography>
+                <Typography 
+                  variant="h6" 
+                  className="text-gray-300 max-w-2xl mx-auto"
+                  sx={{ 
+                    fontSize: '1.2rem',
+                    lineHeight: 1.6,
+                    fontWeight: 400
+                  }}
+                >
+                  From idea validation to team formation, we've got you covered with cutting-edge tools
+                </Typography>
+              </div>
+            </Fade>
           </div>
 
           <Grid container spacing={4}>
             {features.map((feature, index) => (
               <Grid item xs={12} md={6} key={index}>
-                <Card
-                  className={`h-full bg-gradient-to-br ${feature.gradient} p-0.5 rounded-xl cursor-pointer transition-all duration-300 ${
-                    hoveredCard === index ? 'scale-105 shadow-2xl' : 'hover:scale-102'
-                  }`}
-                  onMouseEnter={() => setHoveredCard(index)}
-                  onMouseLeave={() => setHoveredCard(null)}
-                >
-                  <div className="bg-slate-900/90 backdrop-blur-sm h-full rounded-xl p-8">
-                    <div className="flex items-center mb-6">
-                      <div className={`p-3 rounded-lg bg-gradient-to-r ${feature.gradient} text-white mr-4`}>
-                        {feature.icon}
-                      </div>
-                      <Typography variant="h5" className="text-white font-bold">
-                        {feature.title}
+                <Zoom in timeout={600 + index * 200}>
+                  <Card
+                    elevation={hoveredCard === index ? 20 : 5}
+                    sx={{
+                      height: '100%',
+                      background: `linear-gradient(135deg, ${feature.gradient.replace('from-', '').replace('to-', '').split(' ').map(color => {
+                        const colorMap = {
+                          'yellow-400': '#facc15',
+                          'orange-500': '#f97316',
+                          'blue-500': '#3b82f6',
+                          'purple-600': '#9333ea',
+                          'green-500': '#10b981',
+                          'teal-500': '#14b8a6',
+                          'pink-500': '#ec4899',
+                          'red-500': '#ef4444'
+                        };
+                        return colorMap[color] || '#3b82f6';
+                      }).join(', ')})`,
+                      padding: '2px',
+                      borderRadius: '16px',
+                      cursor: 'pointer',
+                      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                      transform: hoveredCard === index ? 'translateY(-8px) scale(1.02)' : 'translateY(0) scale(1)',
+                      boxShadow: hoveredCard === index 
+                        ? '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(59, 130, 246, 0.3)' 
+                        : '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
+                      '&:hover': {
+                        transform: 'translateY(-8px) scale(1.02)',
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(59, 130, 246, 0.3)'
+                      }
+                    }}
+                    onMouseEnter={() => setHoveredCard(index)}
+                    onMouseLeave={() => setHoveredCard(null)}
+                  >
+                    <CardContent
+                      sx={{
+                        background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9))',
+                        backdropFilter: 'blur(16px)',
+                        height: '100%',
+                        borderRadius: '14px',
+                        p: 4,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        '&:before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: '1px',
+                          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)'
+                        }
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                        <Box
+                          sx={{
+                            p: 2,
+                            borderRadius: '12px',
+                            background: `linear-gradient(135deg, ${feature.gradient.replace('from-', '').replace('to-', '').split(' ').map(color => {
+                              const colorMap = {
+                                'yellow-400': '#facc15',
+                                'orange-500': '#f97316',
+                                'blue-500': '#3b82f6',
+                                'purple-600': '#9333ea',
+                                'green-500': '#10b981',
+                                'teal-500': '#14b8a6',
+                                'pink-500': '#ec4899',
+                                'red-500': '#ef4444'
+                              };
+                              return colorMap[color] || '#3b82f6';
+                            }).join(', ')})`,
+                            color: 'white',
+                            mr: 2,
+                            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                            transition: 'all 0.3s ease',
+                            ...(hoveredCard === index && {
+                              transform: 'rotate(5deg) scale(1.1)',
+                              boxShadow: '0 12px 40px rgba(0,0,0,0.4)'
+                            })
+                          }}
+                        >
+                          {feature.icon}
+                        </Box>
+                        <Typography 
+                          variant="h5" 
+                          sx={{ 
+                            color: 'white', 
+                            fontWeight: 700,
+                            fontSize: '1.5rem',
+                            letterSpacing: '-0.025em'
+                          }}
+                        >
+                          {feature.title}
+                        </Typography>
+                      </Box>
+                      
+                      <Typography 
+                        variant="body1" 
+                        sx={{ 
+                          color: 'rgba(203, 213, 225, 0.9)',
+                          lineHeight: 1.7,
+                          fontSize: '1.1rem',
+                          flexGrow: 1,
+                          fontWeight: 400
+                        }}
+                      >
+                        {feature.description}
                       </Typography>
-                    </div>
-                    <Typography variant="body1" className="text-gray-300 leading-relaxed">
-                      {feature.description}
-                    </Typography>
-                  </div>
-                </Card>
+
+                      <Box
+                        sx={{
+                          mt: 3,
+                          pt: 2,
+                          borderTop: '1px solid rgba(255,255,255,0.1)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          opacity: hoveredCard === index ? 1 : 0.7,
+                          transition: 'all 0.3s ease'
+                        }}
+                      >
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            color: 'rgba(156, 163, 175, 0.8)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.1em',
+                            fontWeight: 600
+                          }}
+                        >
+                          Learn More
+                        </Typography>
+                        <ArrowForward 
+                          sx={{ 
+                            color: 'rgba(59, 130, 246, 0.8)',
+                            fontSize: '1.2rem',
+                            transition: 'all 0.3s ease',
+                            transform: hoveredCard === index ? 'translateX(4px)' : 'translateX(0)'
+                          }} 
+                        />
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Zoom>
               </Grid>
             ))}
           </Grid>
         </Container>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-4">
-        <Container maxWidth="md">
-          <Card className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-sm border border-white/10">
-            <CardContent className="p-12 text-center">
-              <Business className="text-white w-16 h-16 mx-auto mb-6" />
-              <Typography variant="h3" className="text-white font-bold mb-4">
-                Ready to find your cofounder?
-              </Typography>
-              <Typography variant="h6" className="text-gray-300 mb-8 max-w-lg mx-auto">
-                Join thousands of entrepreneurs already building the future together
-              </Typography>
-              <Button
-                variant="contained"
-                size="large"
-                startIcon={<GitHub />}
-                onClick={handleGitHubLogin}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-10 py-4 text-lg"
-              >
-                Start Your Journey
-              </Button>
-            </CardContent>
-          </Card>
+      {/* Live Activity Stream - Modern Real-time Feed */}
+      <section className="py-16 px-4">
+        <Container maxWidth="lg">
+          <div className="relative overflow-hidden">
+            {/* Animated background */}
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-pink-500/5 animate-pulse"></div>
+            
+            <div className="relative backdrop-blur-sm border border-white/10 rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></div>
+                    <div className="absolute inset-0 w-3 h-3 rounded-full bg-emerald-400 animate-ping opacity-40"></div>
+                  </div>
+                  <Typography variant="h6" className="text-white font-semibold">
+                    Live Activity
+                  </Typography>
+                </div>
+                <Chip 
+                  label={`${liveStats.users} online`} 
+                  className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                />
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex items-center gap-4 p-3 rounded-lg bg-slate-800/50 border border-white/5">
+                  <Avatar className="w-8 h-8 bg-blue-500">SC</Avatar>
+                  <div className="flex-1">
+                    <Typography variant="body2" className="text-white">
+                      <span className="font-semibold">Sarah Chen</span> just posted a new idea
+                    </Typography>
+                    <Typography variant="caption" className="text-gray-400">2 minutes ago</Typography>
+                  </div>
+                  <Chip label="AI/ML" size="small" className="bg-purple-500/20 text-purple-300" />
+                </div>
+                
+                <div className="flex items-center gap-4 p-3 rounded-lg bg-slate-800/50 border border-white/5">
+                  <Avatar className="w-8 h-8 bg-green-500">MK</Avatar>
+                  <div className="flex-1">
+                    <Typography variant="body2" className="text-white">
+                      <span className="font-semibold">Mike Kumar</span> found a co-founder match
+                    </Typography>
+                    <Typography variant="caption" className="text-gray-400">5 minutes ago</Typography>
+                  </div>
+                  <Chip label="Fintech" size="small" className="bg-green-500/20 text-green-300" />
+                </div>
+                
+                <div className="flex items-center gap-4 p-3 rounded-lg bg-slate-800/50 border border-white/5">
+                  <Avatar className="w-8 h-8 bg-orange-500">EW</Avatar>
+                  <div className="flex-1">
+                    <Typography variant="body2" className="text-white">
+                      <span className="font-semibold">Emma Wilson</span> launched their startup
+                    </Typography>
+                    <Typography variant="caption" className="text-gray-400">12 minutes ago</Typography>
+                  </div>
+                  <Chip label="SaaS" size="small" className="bg-orange-500/20 text-orange-300" />
+                </div>
+              </div>
+            </div>
+          </div>
         </Container>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-white/10 py-12 px-4">
-        <Container maxWidth="lg">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center space-x-2 mb-4 md:mb-0">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <Code className="text-white w-5 h-5" />
+      {/* Interactive Dashboard Preview - No white backgrounds */}
+      <section className="py-20 px-4">
+        <Container maxWidth="xl">
+          <div className="text-center mb-16">
+            <Typography variant="h2" className="text-3xl md:text-5xl font-bold text-white mb-6">
+              See it in
+              <span className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent"> action</span>
+            </Typography>
+            <Typography variant="h6" className="text-gray-300 max-w-2xl mx-auto">
+              Real founders, real connections, real success stories happening right now
+            </Typography>
+          </div>
+
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Real-time Metrics */}
+            <div className="lg:col-span-1">
+              <div className="space-y-6">
+                <div className="p-6 rounded-xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-white/10 backdrop-blur-sm">
+                  <div className="flex items-center gap-3 mb-4">
+                    <TrendingUp className="text-emerald-400" />
+                    <Typography variant="h6" className="text-white">Growth Metrics</Typography>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex justify-between mb-2">
+                        <Typography variant="body2" className="text-gray-300">Ideas Posted Today</Typography>
+                        <Typography variant="body2" className="text-white font-semibold">+{Math.floor(Math.random() * 50 + 20)}</Typography>
+                      </div>
+                      <LinearProgress 
+                        variant="determinate" 
+                        value={75} 
+                        className="h-2 rounded-full bg-slate-700"
+                        sx={{ '& .MuiLinearProgress-bar': { backgroundColor: '#10b981' } }}
+                      />
+                    </div>
+                    <div>
+                      <div className="flex justify-between mb-2">
+                        <Typography variant="body2" className="text-gray-300">New Connections</Typography>
+                        <Typography variant="body2" className="text-white font-semibold">+{Math.floor(Math.random() * 30 + 10)}</Typography>
+                      </div>
+                      <LinearProgress 
+                        variant="determinate" 
+                        value={60} 
+                        className="h-2 rounded-full bg-slate-700"
+                        sx={{ '& .MuiLinearProgress-bar': { backgroundColor: '#3b82f6' } }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="p-6 rounded-xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-white/10 backdrop-blur-sm">
+                  <Typography variant="h6" className="text-white mb-4 flex items-center gap-2">
+                    <People className="text-blue-400" />
+                    Active Now
+                  </Typography>
+                  <div className="flex -space-x-2">
+                    {[...Array(8)].map((_, i) => (
+                      <Avatar key={i} className={`w-8 h-8 border-2 border-slate-800 ${i % 4 === 0 ? 'bg-blue-500' : i % 4 === 1 ? 'bg-green-500' : i % 4 === 2 ? 'bg-purple-500' : 'bg-orange-500'}`}>
+                        {String.fromCharCode(65 + i)}
+                      </Avatar>
+                    ))}
+                    <div className="w-8 h-8 rounded-full border-2 border-slate-800 bg-slate-700 flex items-center justify-center">
+                      <Typography variant="caption" className="text-white text-xs font-semibold">+{Math.floor(Math.random() * 99 + 1)}</Typography>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <Typography variant="h6" className="text-white font-bold">
-                CofounderConnect
+            </div>
+
+            {/* Interactive Tabs */}
+            <div className="lg:col-span-2">
+              <div className="rounded-xl bg-gradient-to-br from-slate-800/30 to-slate-900/30 border border-white/10 backdrop-blur-sm overflow-hidden">
+                <div className="border-b border-white/10">
+                  <Tabs
+                    value={activeTab}
+                    onChange={(e, v) => setActiveTab(v)}
+                    variant="scrollable"
+                    scrollButtons={false}
+                    className="px-6"
+                    sx={{
+                      '& .MuiTab-root': { color: 'rgba(255,255,255,0.7)', textTransform: 'none' },
+                      '& .MuiTab-root.Mui-selected': { color: 'white' },
+                      '& .MuiTabs-indicator': { backgroundColor: '#3b82f6' }
+                    }}
+                  >
+                    {tabData.map((t, idx) => (
+                      <Tab key={idx} icon={t.icon} iconPosition="start" label={t.label} />
+                    ))}
+                  </Tabs>
+                </div>
+                
+                <div className="p-8">
+                  <div className="grid md:grid-cols-2 gap-8">
+                    <div>
+                      <Typography variant="h5" className="text-white font-bold mb-4">
+                        {tabData[activeTab].content.title}
+                      </Typography>
+                      <Typography variant="body1" className="text-gray-300 mb-6 leading-relaxed">
+                        {tabData[activeTab].content.description}
+                      </Typography>
+                      <div className="space-y-4">
+                        {tabData[activeTab].content.features.map((f, i) => (
+                          <div key={i} className="flex items-start gap-3">
+                            <div className="w-5 h-5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <CheckCircle className="w-3 h-3 text-white" />
+                            </div>
+                            <Typography variant="body1" className="text-gray-200">{f}</Typography>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div className="aspect-video rounded-lg bg-gradient-to-br from-slate-700/50 to-slate-800/50 border border-white/10 flex items-center justify-center">
+                        <PlayArrow className="w-16 h-16 text-white/50" />
+                      </div>
+                      <div className="grid grid-cols-3 gap-3">
+                        {[...Array(3)].map((_, i) => (
+                          <div key={i} className="aspect-square rounded-lg bg-gradient-to-br from-slate-700/30 to-slate-800/30 border border-white/5 animate-pulse"></div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* Modern Testimonials Carousel */}
+      <section className="py-20 px-4 overflow-hidden">
+        <Container maxWidth="lg">
+          <div className="text-center mb-16">
+            <Typography variant="h2" className="text-3xl md:text-5xl font-bold text-white mb-4">
+              Success in
+              <span className="bg-gradient-to-r from-emerald-400 to-cyan-500 bg-clip-text text-transparent"> motion</span>
+            </Typography>
+            <Typography variant="h6" className="text-gray-300">
+              Real stories from real founders who found their perfect match
+            </Typography>
+          </div>
+          
+          <div className="relative">
+            <div className="flex gap-8 transition-transform duration-700 ease-out" 
+                 style={{transform: `translateX(-${currentTestimonial * 33.33}%)`}}>
+              {testimonials.map((t, idx) => (
+                <div key={idx} className="flex-shrink-0 w-full md:w-1/3">
+                  <div className={`p-8 rounded-2xl transition-all duration-500 ${
+                    idx === currentTestimonial 
+                      ? 'bg-gradient-to-br from-blue-600/20 to-purple-600/20 border-2 border-purple-500/50 transform scale-105' 
+                      : 'bg-slate-800/30 border border-white/10 hover:border-white/20'
+                  } backdrop-blur-sm`}>
+                    <div className="flex items-center gap-4 mb-6">
+                      <div className="relative">
+                        <Avatar className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 text-lg font-bold">
+                          {t.avatar}
+                        </Avatar>
+                        {idx === currentTestimonial && (
+                          <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 animate-spin opacity-75"></div>
+                        )}
+                      </div>
+                      <div>
+                        <Typography variant="h6" className="text-white font-bold">{t.name}</Typography>
+                        <Typography variant="body2" className="text-gray-400">{t.role}</Typography>
+                        <Chip label={t.company} size="small" className="mt-1 bg-emerald-500/20 text-emerald-300 border-emerald-500/30" />
+                      </div>
+                    </div>
+                    <Typography variant="body1" className="text-gray-200 leading-relaxed italic">
+                      "{t.content}"
+                    </Typography>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      <section className="py-24 px-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/5 to-pink-600/10"></div>
+        <div className="absolute inset-0">
+          <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-blue-500/10 rounded-full blur-xl animate-pulse"></div>
+          <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-purple-500/10 rounded-full blur-xl animate-pulse delay-1000"></div>
+        </div>
+        
+        <Container maxWidth="md" className="relative z-10">
+          <div className="text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500/20 to-blue-500/20 border border-emerald-500/30 mb-8">
+              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+              <Typography variant="body2" className="text-emerald-300 font-medium">
+                {liveStats.users.toLocaleString()} founders already building
               </Typography>
             </div>
-            <Typography variant="body2" className="text-gray-400">
-              © 2024 CofounderConnect. Building the future, together.
+            
+            <Typography variant="h2" className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+              Your co-founder is
+              <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent"> waiting</span>
             </Typography>
+            
+            <Typography variant="h6" className="text-gray-300 mb-12 max-w-2xl mx-auto leading-relaxed">
+              Join the most innovative founders building tomorrow's unicorns. 
+              Find your perfect match in minutes, not months.
+            </Typography>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+              <div className="relative group">
+                <Button
+                  variant="contained"
+                  size="large"
+                  onClick={handleGitHubLogin}
+                  disabled={loading}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold px-12 py-4 text-lg relative overflow-hidden transition-all duration-300 transform group-hover:scale-105"
+                  startIcon={loading ? null : <GitHub className="w-6 h-6" />}
+                >
+                  {loading ? (
+                    <div className="flex items-center gap-3">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      Connecting...
+                    </div>
+                  ) : (
+                    'Start Building Now'
+                  )}
+                </Button>
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg opacity-0 group-hover:opacity-20 transition-opacity duration-300 -z-10"></div>
+              </div>
+              
+              <Button
+                variant="text"
+                size="large"
+                className="text-white/80 hover:text-white px-8 py-4 text-lg font-medium"
+                endIcon={<PlayArrow />}
+              >
+                Watch Demo
+              </Button>
+            </div>
+            
+            <div className="flex justify-center items-center gap-8 text-gray-400">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-emerald-400" />
+                <Typography variant="body2">Free to start</Typography>
+              </div>
+              <div className="flex items-center gap-2">
+                <Security className="w-5 h-5 text-emerald-400" />
+                <Typography variant="body2">Privacy first</Typography>
+              </div>
+              <div className="flex items-center gap-2">
+                <Speed className="w-5 h-5 text-emerald-400" />
+                <Typography variant="body2">Match in 24h</Typography>
+              </div>
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* Modern Footer */}
+      <footer className="border-t border-white/5 bg-black/20 backdrop-blur-sm">
+        <Container maxWidth="xl" className="py-16">
+          <div className="grid lg:grid-cols-5 gap-8">
+            {/* Brand */}
+            <div className="lg:col-span-2">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                  <Code className="text-white w-6 h-6" />
+                </div>
+                <Typography variant="h5" className="text-white font-bold">
+                  CofounderConnect
+                </Typography>
+              </div>
+              
+              <Typography variant="body1" className="text-gray-300 mb-6 max-w-md leading-relaxed">
+                The AI-powered platform where ambitious founders connect, collaborate, and create the next generation of successful startups.
+              </Typography>
+              
+              <div className="flex gap-4">
+                <IconButton className="w-12 h-12 border border-white/10 hover:border-white/20 text-white/70 hover:text-white transition-all duration-300 hover:bg-white/5">
+                  <Twitter />
+                </IconButton>
+                <IconButton className="w-12 h-12 border border-white/10 hover:border-white/20 text-white/70 hover:text-white transition-all duration-300 hover:bg-white/5">
+                  <LinkedIn />
+                </IconButton>
+                <IconButton className="w-12 h-12 border border-white/10 hover:border-white/20 text-white/70 hover:text-white transition-all duration-300 hover:bg-white/5">
+                  <GitHub />
+                </IconButton>
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <div>
+              <Typography variant="subtitle1" className="text-white font-semibold mb-4">Product</Typography>
+              <ul className="space-y-3">
+                {['Features', 'Pricing', 'API', 'Integrations', 'Mobile App'].map((item) => (
+                  <li key={item}>
+                    <Typography variant="body2" className="text-gray-400 hover:text-white cursor-pointer transition-colors duration-200">
+                      {item}
+                    </Typography>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            <div>
+              <Typography variant="subtitle1" className="text-white font-semibold mb-4">Company</Typography>
+              <ul className="space-y-3">
+                {['About Us', 'Careers', 'Press', 'Blog', 'Contact'].map((item) => (
+                  <li key={item}>
+                    <Typography variant="body2" className="text-gray-400 hover:text-white cursor-pointer transition-colors duration-200">
+                      {item}
+                    </Typography>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            <div>
+              <Typography variant="subtitle1" className="text-white font-semibold mb-4">Resources</Typography>
+              <ul className="space-y-3">
+                {['Help Center', 'Community', 'Webinars', 'Success Stories', 'Newsletter'].map((item) => (
+                  <li key={item}>
+                    <Typography variant="body2" className="text-gray-400 hover:text-white cursor-pointer transition-colors duration-200">
+                      {item}
+                    </Typography>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          
+          <div className="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
+            <Typography variant="body2" className="text-gray-500">
+              © 2024 CofounderConnect Inc. All rights reserved.
+            </Typography>
+            
+            <div className="flex gap-6">
+              {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map((item) => (
+                <Typography key={item} variant="body2" className="text-gray-500 hover:text-gray-300 cursor-pointer transition-colors">
+                  {item}
+                </Typography>
+              ))}
+            </div>
+            
+            <div className="flex items-center gap-2 text-gray-500">
+              <Typography variant="body2">Made with</Typography>
+              <span className="text-red-500 animate-pulse">❤️</span>
+              <Typography variant="body2">for entrepreneurs</Typography>
+            </div>
           </div>
         </Container>
       </footer>
