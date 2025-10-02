@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-// Theme Context
 const ThemeContext = createContext();
 export const useTheme = () => useContext(ThemeContext);
 
@@ -30,10 +29,9 @@ const Layout = ({ children }) => {
 
   const handleNavigate = (path) => {
     navigate(path);
-    setShowSettings(false); // Close settings when navigating
+    setShowSettings(false); 
   };
 
-  // Close settings when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (settingsRef.current && !settingsRef.current.contains(event.target)) {
@@ -48,7 +46,7 @@ const Layout = ({ children }) => {
   }, []);
 
   const navigationItems = [
-    { id: 'dashboard', label: 'Feed', icon: <Home className="w-6 h-6" />, path: '/dashboard' },
+    { id: 'dashboard', label: 'Posts', icon: <Home className="w-6 h-6" />, path: '/dashboard' },
     { id: 'create', label: 'Create Post', icon: <Plus className="w-6 h-6" />, path: '/create-post' },
     { id: 'ai-chat', label: 'AI Assistant', icon: <Bot className="w-6 h-6" />, path: '/ai-chat' },
     { id: 'matchings', label: 'Matchings', icon: <Users className="w-6 h-6" />, path: '/matchings' }
@@ -73,13 +71,12 @@ const Layout = ({ children }) => {
   return (
     <ThemeContext.Provider value={{ isDarkMode, toggleTheme, theme }}>
       <div className={`min-h-screen bg-gradient-to-br ${theme.bg} transition-all duration-300`}>
-        {/* Sidebar Navigation */}
+     
         <motion.nav
           initial={{ x: -100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           className={`fixed left-0 top-0 h-full w-64 ${theme.sidebarBg} backdrop-blur-xl ${theme.border} border-r p-6 flex flex-col z-40`}
         >
-          {/* Logo */}
           <div className="mb-8">
             <h1 className={`text-2xl font-bold ${theme.text}`}>
               Find<span className="text-blue-500">YourCo</span>
@@ -87,7 +84,6 @@ const Layout = ({ children }) => {
             <p className={`text-sm ${theme.textMuted} mt-1`}>Professional Network</p>
           </div>
 
-          {/* Navigation Items */}
           <div className="space-y-2 flex-1">
             {navigationItems.map((item) => {
               const isActive = location.pathname === item.path;
@@ -108,8 +104,6 @@ const Layout = ({ children }) => {
               );
             })}
           </div>
-
-          {/* User Profile & Settings */}
           <div className={`mt-8 pt-6 ${theme.border} border-t`}>
             <div className={`flex items-center space-x-3 p-3 rounded-xl ${theme.cardBg} backdrop-blur-md mb-3`}>
               <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
@@ -121,7 +115,6 @@ const Layout = ({ children }) => {
               </div>
             </div>
             
-            {/* Settings Dropdown */}
             <div className="relative" ref={settingsRef}>
               <button
                 onClick={() => setShowSettings(!showSettings)}
@@ -141,7 +134,6 @@ const Layout = ({ children }) => {
                 </motion.div>
               </button>
 
-              {/* Settings Dropdown Menu */}
               <AnimatePresence>
                 {showSettings && (
                   <motion.div
@@ -150,7 +142,7 @@ const Layout = ({ children }) => {
                     exit={{ opacity: 0, y: -10 }}
                     className={`absolute bottom-full left-0 right-0 mb-2 ${theme.cardBg} backdrop-blur-xl ${theme.border} border rounded-xl shadow-xl overflow-hidden`}
                   >
-                  {/* Theme Toggle */}
+               
                   <button
                     onClick={toggleTheme}
                     className={`w-full flex items-center justify-between p-3 ${theme.hover} transition-all ${theme.textSecondary}`}
@@ -166,7 +158,7 @@ const Layout = ({ children }) => {
                     </div>
                   </button>
 
-                  {/* Logout */}
+                 
                   <button
                     onClick={handleLogout}
                     className={`w-full flex items-center space-x-3 p-3 ${theme.textSecondary} hover:text-red-400 ${theme.hover} transition-all border-t ${theme.border}`}
@@ -181,7 +173,6 @@ const Layout = ({ children }) => {
           </div>
         </motion.nav>
 
-        {/* Main Content Area */}
         <div className="ml-64 min-h-screen">
           {children}
         </div>

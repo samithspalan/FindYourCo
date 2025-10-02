@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Users,
   MapPin,
@@ -14,7 +14,10 @@ import {
   Heart,
   X,
   Check,
-  Eye
+  Eye,
+  Zap,
+  Target,
+  TrendingUp
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../components/Layout.jsx';
@@ -22,6 +25,7 @@ import { useTheme } from '../components/Layout.jsx';
 const Matchings = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
+  
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -108,6 +112,9 @@ const Matchings = () => {
     }
   ];
 
+  // Sort matches by percentage (highest first)
+  const sortedMatches = [...matches].sort((a, b) => b.matchPercentage - a.matchPercentage);
+
   const getMatchColor = (percentage) => {
     if (percentage >= 90) return 'text-green-400';
     if (percentage >= 80) return 'text-blue-400';
@@ -123,7 +130,7 @@ const Matchings = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8">
+    <div className="w-full px-6 py-8">
       {/* Header */}
       <motion.div
         initial={{ y: -20, opacity: 0 }}
@@ -214,13 +221,17 @@ const Matchings = () => {
         {/* Matches Grid */}
         <div className="flex-1">
           <div className="grid lg:grid-cols-2 gap-6">
-            {matches.map((match, index) => (
+            {sortedMatches.map((match, index) => (
               <motion.div
                 key={match.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className={`${theme.cardBg} backdrop-blur-md ${theme.border} border rounded-2xl p-6 shadow-xl relative overflow-hidden`}
+                whileHover={{ 
+                  y: -5,
+                  transition: { duration: 0.2 }
+                }}
+                className={`${theme.cardBg} backdrop-blur-md ${theme.border} border rounded-2xl p-6 shadow-xl relative overflow-hidden cursor-pointer group`}
               >
                 {/* Match Badge */}
                 <div className={`absolute top-4 right-4 px-3 py-1 rounded-full border ${getMatchBgColor(match.matchPercentage)}`}>
@@ -238,13 +249,13 @@ const Matchings = () => {
                 )}
 
                 {/* Profile Header */}
-                <div className="flex items-start space-x-4 mb-4 pt-8">
+                <div className="flex items-start space-x-4 mb-4 pt-8 relative z-10">
                   <div className="relative">
                     <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
                       {match.avatar}
                     </div>
                     {match.isOnline && (
-                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-400 rounded-full border-2 border-gray-800"></div>
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-400 rounded-full border-2 border-gray-800" />
                     )}
                     {match.verified && (
                       <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
@@ -274,12 +285,12 @@ const Matchings = () => {
                 </div>
 
                 {/* Bio */}
-                <p className={`${theme.textSecondary} text-sm mb-4 line-clamp-3`}>
+                <p className={`${theme.textSecondary} text-sm mb-4 line-clamp-3 relative z-10`}>
                   {match.bio}
                 </p>
 
                 {/* Skills */}
-                <div className="mb-4">
+                <div className="mb-4 relative z-10">
                   <h4 className={`text-sm font-medium ${theme.textMuted} mb-2`}>Key Skills</h4>
                   <div className="flex flex-wrap gap-2">
                     {match.skills.slice(0, 4).map((skill, skillIndex) => (
@@ -299,7 +310,7 @@ const Matchings = () => {
                 </div>
 
                 {/* Experience */}
-                <div className="mb-6">
+                <div className="mb-6 relative z-10">
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center space-x-2">
                       <GraduationCap className={`w-4 h-4 ${theme.textMuted}`} />
@@ -315,37 +326,25 @@ const Matchings = () => {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between relative z-10">
                   <div className={`flex items-center space-x-2 text-sm ${theme.textMuted}`}>
                     <Calendar className="w-4 h-4" />
                     <span>{match.lastActive}</span>
                   </div>
                   
                   <div className="flex items-center space-x-2">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className={`p-2 rounded-lg ${theme.hover} ${theme.textMuted} transition-all`}
-                    >
+                    <button className={`p-2 rounded-lg ${theme.hover} ${theme.textMuted} transition-all`}>
                       <Eye className="w-5 h-5" />
-                    </motion.button>
+                    </button>
                     
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className={`p-2 rounded-lg ${theme.hover} ${theme.textMuted} transition-all`}
-                    >
+                    <button className={`p-2 rounded-lg ${theme.hover} ${theme.textMuted} transition-all`}>
                       <Heart className="w-5 h-5" />
-                    </motion.button>
+                    </button>
                     
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition-all shadow-lg flex items-center space-x-2"
-                    >
+                    <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition-all shadow-lg flex items-center space-x-2">
                       <MessageCircle className="w-4 h-4" />
                       <span>Connect</span>
-                    </motion.button>
+                    </button>
                   </div>
                 </div>
               </motion.div>
