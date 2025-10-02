@@ -56,19 +56,18 @@ const Layout = ({ children }) => {
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
-    setShowSettings(false); // Close settings after toggling theme
+    setShowSettings(false); 
   };
 
-  // Theme colors - More professional and darker
   const theme = {
-    bg: isDarkMode ? 'from-gray-900 via-gray-800 to-black' : 'from-gray-50 via-white to-gray-100',
+    bg: isDarkMode ? 'from-gray-900 via-gray-800 to-black' : 'from-blue-50 via-white to-blue-100',
     cardBg: isDarkMode ? 'bg-gray-800/80' : 'bg-white/90',
     text: isDarkMode ? 'text-white' : 'text-gray-900',
     textSecondary: isDarkMode ? 'text-gray-300' : 'text-gray-600',
     textMuted: isDarkMode ? 'text-gray-400' : 'text-gray-500',
     border: isDarkMode ? 'border-gray-700/50' : 'border-gray-200',
-    sidebarBg: isDarkMode ? 'bg-gray-900/90' : 'bg-white/95',
-    hover: isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-100'
+    sidebarBg: isDarkMode ? 'bg-gray-900/90' : 'bg-gradient-to-r from-white via-blue-50/30 to-white',
+    hover: isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-blue-50/30'
   };
 
   return (

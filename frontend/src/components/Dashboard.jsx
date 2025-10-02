@@ -1,19 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Bell, 
-  Search,
   MessageCircle,
   Heart,
   Repeat2,
   Share2,
   MoreHorizontal,
-  CheckCircle
+  CheckCircle,
+  Users,
+  Sparkles
 } from 'lucide-react';
 import { useTheme } from './Layout.jsx';
 
 const Dashboard = () => {
   const { theme } = useTheme();
+  const [activeTab, setActiveTab] = useState('for-you');
 
   const mockPosts = [
     {
@@ -58,136 +59,145 @@ const Dashboard = () => {
     }
   ];
 
+  const tabs = [
+    {
+      id: 'for-you',
+      label: 'For You',
+      icon: <Sparkles className="w-4 h-4" />,
+      description: 'Personalized recommendations'
+    },
+    {
+      id: 'following',
+      label: 'Following',
+      icon: <Users className="w-4 h-4" />,
+      description: 'Posts from your network'
+    }
+  ];
+
   return (
-    <>
-      {/* Top Header */}
-      <motion.div
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className={`sticky top-0 z-30 ${theme.sidebarBg} backdrop-blur-xl ${theme.border} border-b px-6 py-4`}
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className={`text-2xl font-bold ${theme.text}`}>Co-Founder Feed</h1>
-            <p className={`${theme.textMuted} mt-1`}>Discover opportunities and connect with entrepreneurs</p>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <button className={`p-2 rounded-lg ${theme.hover} ${theme.textSecondary} transition-all`}>
-              <Bell className="w-5 h-5" />
-            </button>
-            <button className={`p-2 rounded-lg ${theme.hover} ${theme.textSecondary} transition-all`}>
-              <Search className="w-5 h-5" />
-            </button>
-          </div>
+    <div className="min-h-screen">
+      {/* Twitter-like Header with Tabs */}
+      <div className={`sticky top-0 z-30 ${theme.sidebarBg} backdrop-blur-xl ${theme.border} border-b`}>
+        {/* Tab Navigation */}
+        <div className="flex">
+          {tabs.map((tab) => (
+            <motion.button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 relative px-6 py-4 transition-all duration-300 ${
+                activeTab === tab.id 
+                  ? `${theme.text} font-semibold` 
+                  : `${theme.textMuted} hover:${theme.textSecondary}`
+              }`}
+              whileHover={{ backgroundColor: activeTab === tab.id ? 'transparent' : (theme.hover.includes('gray-700') ? 'rgba(75, 85, 99, 0.1)' : 'rgba(156, 163, 175, 0.1)') }}
+            >
+              <div className="flex items-center justify-center space-x-2">
+                {tab.icon}
+                <span className="text-base">{tab.label}</span>
+              </div>
+              
+              {/* Active Tab Indicator */}
+              {activeTab === tab.id && (
+                <motion.div
+                  layoutId="activeTab"
+                  className="absolute bottom-0 left-0 right-0 h-1 bg-blue-500 rounded-full"
+                  transition={{ duration: 0.3 }}
+                />
+              )}
+            </motion.button>
+          ))}
         </div>
-      </motion.div>
+      </div>
 
-          {/* Posts Feed */}
-          <div className="max-w-2xl mx-auto px-6 py-6 space-y-6">
-            {mockPosts.map((post, index) => (
-              <motion.article
-                key={post.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className={`${theme.cardBg} backdrop-blur-md ${theme.border} border rounded-2xl p-6 shadow-xl`}
-              >
-                {/* Post Header */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                      {post.author.avatar}
-                    </div>
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <h3 className={`font-bold ${theme.text}`}>{post.author.name}</h3>
-                        {post.author.verified && (
-                          <CheckCircle className="w-4 h-4 text-blue-500" />
-                        )}
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className={`${theme.textMuted}`}>{post.author.handle}</span>
-                        <span className={`${theme.textMuted}`}>·</span>
-                        <span className={`${theme.textMuted}`}>{post.time}</span>
-                      </div>
-                    </div>
+      {/* Posts Feed */}
+      <div className="max-w-2xl mx-auto">
+        <div className="divide-y divide-gray-700/20">
+          {activeTab === 'for-you' && mockPosts.map((post, index) => (
+            <motion.article
+              key={post.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className={`px-4 py-4 ${theme.hover} transition-colors cursor-pointer border-b ${theme.border}/20`}
+            >
+              {/* Post Header */}
+              <div className="flex space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+                  {post.author.avatar}
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center space-x-1 mb-1">
+                    <h3 className={`font-bold ${theme.text} truncate`}>{post.author.name}</h3>
+                    {post.author.verified && (
+                      <CheckCircle className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                    )}
+                    <span className={`${theme.textMuted} text-sm`}>{post.author.handle}</span>
+                    <span className={`${theme.textMuted} text-sm`}>·</span>
+                    <span className={`${theme.textMuted} text-sm`}>{post.time}</span>
                   </div>
-                  <button className={`p-2 rounded-lg ${theme.hover} ${theme.textMuted} transition-all`}>
-                    <MoreHorizontal className="w-5 h-5" />
-                  </button>
-                </div>
+                  
+                  {/* Post Content */}
+                  <div className="mb-3">
+                    <p className={`${theme.textSecondary} leading-relaxed`}>{post.content}</p>
+                  </div>
 
-                {/* Post Content */}
-                <div className="mb-4">
-                  <p className={`${theme.textSecondary} leading-relaxed text-lg`}>{post.content}</p>
-                </div>
-
-                {/* Tags */}
-                {post.tags && (
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {post.tags.map((tag, tagIndex) => (
-                      <span
-                        key={tagIndex}
-                        className="px-3 py-1 bg-blue-500/10 text-blue-500 rounded-full text-sm font-medium"
-                      >
-                        #{tag}
-                      </span>
+                  {/* Tags */}
+                  {post.tags && (
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {post.tags.map((tag, tagIndex) => (
+                        <span
+                          key={tagIndex}
+                          className="px-2 py-1 bg-blue-500/10 text-blue-500 rounded-full text-xs font-medium"
+                        >
+                          #{tag}
+                        </span>
                     ))}
                   </div>
                 )}
 
-                {/* Post Actions */}
-                <div className="flex items-center justify-between pt-4 border-t border-gray-700/30">
-                  <div className="flex items-center space-x-6">
+                  {/* Post Actions */}
+                  <div className="flex items-center justify-between max-w-md mt-3">
                     <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
-                      className={`flex items-center space-x-2 ${theme.textMuted} hover:text-blue-400 transition-colors`}
+                      className={`flex items-center space-x-1 ${theme.textMuted} hover:text-blue-400 transition-colors`}
                     >
-                      <MessageCircle className="w-5 h-5" />
-                      <span className="font-medium">{post.replies}</span>
+                      <MessageCircle className="w-4 h-4" />
+                      <span className="text-sm">{post.replies}</span>
                     </motion.button>
                     
                     <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
-                      className={`flex items-center space-x-2 ${theme.textMuted} hover:text-green-400 transition-colors`}
+                      className={`flex items-center space-x-1 ${theme.textMuted} hover:text-green-400 transition-colors`}
                     >
-                      <Repeat2 className="w-5 h-5" />
-                      <span className="font-medium">{post.reposts}</span>
+                      <Repeat2 className="w-4 h-4" />
+                      <span className="text-sm">{post.reposts}</span>
                     </motion.button>
                     
                     <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
-                      className={`flex items-center space-x-2 ${theme.textMuted} hover:text-red-400 transition-colors`}
+                      className={`flex items-center space-x-1 ${theme.textMuted} hover:text-red-400 transition-colors`}
                     >
-                      <Heart className="w-5 h-5" />
-                      <span className="font-medium">{post.likes}</span>
+                      <Heart className="w-4 h-4" />
+                      <span className="text-sm">{post.likes}</span>
                     </motion.button>
                     
                     <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
-                      className={`flex items-center space-x-2 ${theme.textMuted} hover:text-blue-400 transition-colors`}
+                      className={`${theme.textMuted} hover:text-blue-400 transition-colors`}
                     >
-                      <Share2 className="w-5 h-5" />
+                      <Share2 className="w-4 h-4" />
                     </motion.button>
                   </div>
-
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition-all shadow-lg"
-                  >
-                    Connect
-                  </motion.button>
                 </div>
-              </motion.article>
+              </div>
+            </motion.article>
             ))}
 
-      {/* Load More */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -198,8 +208,9 @@ const Dashboard = () => {
           Load More Posts
         </button>
       </motion.div>
+        </div>
+      </div>
     </div>
-    </>
   );
 };
 
