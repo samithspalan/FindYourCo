@@ -1,210 +1,205 @@
+import React from 'react';
+import { motion } from 'framer-motion';
 import { 
-  Container, 
-  Typography, 
-  Box, 
-  Card, 
-  CardContent,
-  Button,
-  Avatar,
-  Chip,
-  Divider
-} from '@mui/material';
-import {
-  GitHub,
-  Lightbulb,
-  People,
-  TrendingUp,
-  ExitToApp
-} from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+  Bell, 
+  Search,
+  MessageCircle,
+  Heart,
+  Repeat2,
+  Share2,
+  MoreHorizontal,
+  CheckCircle
+} from 'lucide-react';
+import { useTheme } from './Layout.jsx';
 
 const Dashboard = () => {
-  const navigate = useNavigate();
+  const { theme } = useTheme();
 
-  const handleLogout = () => {
-    navigate('/');
-  };
+  const mockPosts = [
+    {
+      id: 1,
+      author: { name: 'Sarah Chen', handle: '@sarah_chen', avatar: 'SC', verified: true },
+      time: '2h',
+      content: 'Seeking a technical co-founder for my AI-powered productivity platform. We\'ve validated product-market fit with 10K+ users and $50K ARR. Looking for someone with React/Node.js expertise and startup experience.',
+      likes: 127,
+      reposts: 34,
+      replies: 18,
+      tags: ['AI', 'Productivity', 'B2B SaaS']
+    },
+    {
+      id: 2,
+      author: { name: 'Marcus Rodriguez', handle: '@marcus_dev', avatar: 'MR', verified: false },
+      time: '4h',
+      content: 'Building the next generation of remote collaboration tools. Currently at $25K MRR with strong growth. Looking for a business co-founder with marketing and sales experience to scale to $1M ARR.',
+      likes: 89,
+      reposts: 12,
+      replies: 23,
+      tags: ['Remote Work', 'SaaS', 'Collaboration']
+    },
+    {
+      id: 3,
+      author: { name: 'Elena Park', handle: '@elena_design', avatar: 'EP', verified: true },
+      time: '6h',
+      content: 'Healthcare tech entrepreneur seeking CTO co-founder. We\'re revolutionizing patient care with AI diagnostics. Already have pilot partnerships with 3 hospitals and $2M in pre-seed funding.',
+      likes: 203,
+      reposts: 45,
+      replies: 31,
+      tags: ['HealthTech', 'AI', 'Diagnostics']
+    },
+    {
+      id: 4,
+      author: { name: 'David Kim', handle: '@david_fintech', avatar: 'DK', verified: false },
+      time: '8h',
+      content: 'FinTech startup focused on crypto payment solutions for SMBs. Looking for a technical co-founder with blockchain and payment processing experience. We have LOIs from 50+ merchants.',
+      likes: 156,
+      reposts: 28,
+      replies: 19,
+      tags: ['FinTech', 'Crypto', 'Payments']
+    }
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full z-50 backdrop-blur-md bg-black/20 border-b border-white/10">
-        <Container maxWidth="xl" className="py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <Lightbulb className="text-white w-5 h-5" />
-              </div>
-              <Typography variant="h6" className="text-white font-bold">
-                CofounderConnect
-              </Typography>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Avatar className="w-8 h-8 bg-blue-500">
-                <GitHub className="w-4 h-4" />
-              </Avatar>
-              <Button
-                variant="outlined"
-                startIcon={<ExitToApp />}
-                onClick={handleLogout}
-                className="text-white border-white/30 hover:border-white/50"
+    <>
+      {/* Top Header */}
+      <motion.div
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className={`sticky top-0 z-30 ${theme.sidebarBg} backdrop-blur-xl ${theme.border} border-b px-6 py-4`}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className={`text-2xl font-bold ${theme.text}`}>Co-Founder Feed</h1>
+            <p className={`${theme.textMuted} mt-1`}>Discover opportunities and connect with entrepreneurs</p>
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            <button className={`p-2 rounded-lg ${theme.hover} ${theme.textSecondary} transition-all`}>
+              <Bell className="w-5 h-5" />
+            </button>
+            <button className={`p-2 rounded-lg ${theme.hover} ${theme.textSecondary} transition-all`}>
+              <Search className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </motion.div>
+
+          {/* Posts Feed */}
+          <div className="max-w-2xl mx-auto px-6 py-6 space-y-6">
+            {mockPosts.map((post, index) => (
+              <motion.article
+                key={post.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className={`${theme.cardBg} backdrop-blur-md ${theme.border} border rounded-2xl p-6 shadow-xl`}
               >
-                Logout
-              </Button>
-            </div>
-          </div>
-        </Container>
-      </nav>
-
-      {/* Dashboard Content */}
-      <div className="pt-24 pb-12 px-4">
-        <Container maxWidth="xl">
-          {/* Welcome Section */}
-          <div className="mb-12">
-            <Typography variant="h3" className="text-white font-bold mb-4">
-              Welcome to your Dashboard! 🚀
-            </Typography>
-            <Typography variant="h6" className="text-gray-300 mb-8">
-              This is a dummy dashboard. The real implementation will come later.
-            </Typography>
-            
-            <div className="grid md:grid-cols-3 gap-6 mb-8">
-              <Card className="bg-gradient-to-br from-blue-500/20 to-purple-600/20 backdrop-blur-sm border border-white/10">
-                <CardContent className="p-6 text-center">
-                  <Lightbulb className="text-yellow-400 w-12 h-12 mx-auto mb-4" />
-                  <Typography variant="h4" className="text-white font-bold mb-2">
-                    12
-                  </Typography>
-                  <Typography variant="body1" className="text-gray-300">
-                    Ideas Posted
-                  </Typography>
-                </CardContent>
-              </Card>
-              
-              <Card className="bg-gradient-to-br from-green-500/20 to-teal-500/20 backdrop-blur-sm border border-white/10">
-                <CardContent className="p-6 text-center">
-                  <People className="text-green-400 w-12 h-12 mx-auto mb-4" />
-                  <Typography variant="h4" className="text-white font-bold mb-2">
-                    3
-                  </Typography>
-                  <Typography variant="body1" className="text-gray-300">
-                    Connections
-                  </Typography>
-                </CardContent>
-              </Card>
-              
-              <Card className="bg-gradient-to-br from-pink-500/20 to-red-500/20 backdrop-blur-sm border border-white/10">
-                <CardContent className="p-6 text-center">
-                  <TrendingUp className="text-pink-400 w-12 h-12 mx-auto mb-4" />
-                  <Typography variant="h4" className="text-white font-bold mb-2">
-                    85%
-                  </Typography>
-                  <Typography variant="body1" className="text-gray-300">
-                    Profile Score
-                  </Typography>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-
-          {/* Recent Activity */}
-          <Card className="bg-black/20 backdrop-blur-sm border border-white/10 mb-8">
-            <CardContent className="p-8">
-              <Typography variant="h5" className="text-white font-bold mb-6">
-                Recent Activity
-              </Typography>
-              
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 rounded-lg bg-white/5">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                {/* Post Header */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                      {post.author.avatar}
+                    </div>
                     <div>
-                      <Typography variant="body1" className="text-white">
-                        Posted new idea: "AI-powered code review tool"
-                      </Typography>
-                      <Typography variant="body2" className="text-gray-400">
-                        2 hours ago
-                      </Typography>
+                      <div className="flex items-center space-x-2">
+                        <h3 className={`font-bold ${theme.text}`}>{post.author.name}</h3>
+                        {post.author.verified && (
+                          <CheckCircle className="w-4 h-4 text-blue-500" />
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className={`${theme.textMuted}`}>{post.author.handle}</span>
+                        <span className={`${theme.textMuted}`}>·</span>
+                        <span className={`${theme.textMuted}`}>{post.time}</span>
+                      </div>
                     </div>
                   </div>
-                  <Chip label="Idea" className="bg-blue-500/20 text-blue-300 border-blue-500/30" />
+                  <button className={`p-2 rounded-lg ${theme.hover} ${theme.textMuted} transition-all`}>
+                    <MoreHorizontal className="w-5 h-5" />
+                  </button>
                 </div>
-                
-                <div className="flex items-center justify-between p-4 rounded-lg bg-white/5">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
-                    <div>
-                      <Typography variant="body1" className="text-white">
-                        Connected with Sarah Johnson
-                      </Typography>
-                      <Typography variant="body2" className="text-gray-400">
-                        1 day ago
-                      </Typography>
-                    </div>
-                  </div>
-                  <Chip label="Connection" className="bg-green-500/20 text-green-300 border-green-500/30" />
-                </div>
-                
-                <div className="flex items-center justify-between p-4 rounded-lg bg-white/5">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-3 h-3 bg-purple-400 rounded-full"></div>
-                    <div>
-                      <Typography variant="body1" className="text-white">
-                        Joined project: "EcoTrack - Sustainability App"
-                      </Typography>
-                      <Typography variant="body2" className="text-gray-400">
-                        3 days ago
-                      </Typography>
-                    </div>
-                  </div>
-                  <Chip label="Project" className="bg-purple-500/20 text-purple-300 border-purple-500/30" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* Quick Actions */}
-          <Card className="bg-black/20 backdrop-blur-sm border border-white/10">
-            <CardContent className="p-8">
-              <Typography variant="h5" className="text-white font-bold mb-6">
-                Quick Actions
-              </Typography>
-              
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Button
-                  variant="contained"
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3"
-                  fullWidth
-                >
-                  Post New Idea
-                </Button>
-                <Button
-                  variant="contained"
-                  className="bg-gradient-to-r from-green-600 to-teal-600 text-white py-3"
-                  fullWidth
-                >
-                  Find Cofounders
-                </Button>
-                <Button
-                  variant="contained"
-                  className="bg-gradient-to-r from-orange-600 to-red-600 text-white py-3"
-                  fullWidth
-                >
-                  Browse Ideas
-                </Button>
-                <Button
-                  variant="contained"
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3"
-                  fullWidth
-                >
-                  My Projects
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </Container>
-      </div>
+                {/* Post Content */}
+                <div className="mb-4">
+                  <p className={`${theme.textSecondary} leading-relaxed text-lg`}>{post.content}</p>
+                </div>
+
+                {/* Tags */}
+                {post.tags && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {post.tags.map((tag, tagIndex) => (
+                      <span
+                        key={tagIndex}
+                        className="px-3 py-1 bg-blue-500/10 text-blue-500 rounded-full text-sm font-medium"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Post Actions */}
+                <div className="flex items-center justify-between pt-4 border-t border-gray-700/30">
+                  <div className="flex items-center space-x-6">
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      className={`flex items-center space-x-2 ${theme.textMuted} hover:text-blue-400 transition-colors`}
+                    >
+                      <MessageCircle className="w-5 h-5" />
+                      <span className="font-medium">{post.replies}</span>
+                    </motion.button>
+                    
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      className={`flex items-center space-x-2 ${theme.textMuted} hover:text-green-400 transition-colors`}
+                    >
+                      <Repeat2 className="w-5 h-5" />
+                      <span className="font-medium">{post.reposts}</span>
+                    </motion.button>
+                    
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      className={`flex items-center space-x-2 ${theme.textMuted} hover:text-red-400 transition-colors`}
+                    >
+                      <Heart className="w-5 h-5" />
+                      <span className="font-medium">{post.likes}</span>
+                    </motion.button>
+                    
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      className={`flex items-center space-x-2 ${theme.textMuted} hover:text-blue-400 transition-colors`}
+                    >
+                      <Share2 className="w-5 h-5" />
+                    </motion.button>
+                  </div>
+
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition-all shadow-lg"
+                  >
+                    Connect
+                  </motion.button>
+                </div>
+              </motion.article>
+            ))}
+
+      {/* Load More */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+        className="text-center py-8"
+      >
+        <button className={`${theme.cardBg} backdrop-blur-md ${theme.border} border px-8 py-3 rounded-lg ${theme.textSecondary} hover:${theme.text} transition-all`}>
+          Load More Posts
+        </button>
+      </motion.div>
     </div>
+    </>
   );
 };
 

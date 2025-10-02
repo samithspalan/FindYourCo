@@ -77,25 +77,69 @@ const HomePage = () => {
       icon: <Lightbulb className="w-8 h-8" />,
       title: "Share Ideas",
       description: "Post your innovative ideas and get feedback from potential cofounders",
-      gradient: "from-yellow-400 to-orange-500"
+      gradient: "from-yellow-400 to-orange-500",
+      detailedInfo: {
+        subtitle: "Innovative Idea Sharing Platform",
+        details: [
+          "AI-powered idea validation with instant feedback",
+          "Connect with industry experts and potential investors",
+          "Visual idea boards with collaborative editing",
+          "Privacy controls for sensitive business concepts",
+          "Trending ideas discovery and market analysis"
+        ],
+        stats: { users: "12K+", ideas: "2.5K+", success: "78%" }
+      }
     },
     {
       icon: <People className="w-8 h-8" />,
       title: "Find Cofounders",
       description: "Connect with like-minded entrepreneurs who complement your skills",
-      gradient: "from-blue-500 to-purple-600"
+      gradient: "from-blue-500 to-purple-600",
+      detailedInfo: {
+        subtitle: "Smart Cofounder Matching System",
+        details: [
+          "Advanced algorithm matching based on skills & vision",
+          "Comprehensive personality and work style assessment",
+          "Video introduction profiles and portfolio showcases",
+          "Secure messaging with integrated collaboration tools",
+          "Success stories and testimonials from matched teams"
+        ],
+        stats: { matches: "1.8K+", success: "85%", time: "2 weeks avg" }
+      }
     },
     {
       icon: <RocketLaunch className="w-8 h-8" />,
       title: "Build Together",
       description: "Collaborate on projects and turn ideas into successful startups",
-      gradient: "from-green-500 to-teal-500"
+      gradient: "from-green-500 to-teal-500",
+      detailedInfo: {
+        subtitle: "Collaborative Development Environment",
+        details: [
+          "Integrated project management with milestone tracking",
+          "Real-time collaboration tools and shared workspaces",
+          "Resource library with templates and best practices",
+          "Built-in version control for documents and designs",
+          "Progress tracking with automated reporting"
+        ],
+        stats: { projects: "950+", teams: "500+", completion: "92%" }
+      }
     },
     {
       icon: <TrendingUp className="w-8 h-8" />,
       title: "Scale Up",
       description: "Access resources, mentorship, and network to grow your venture",
-      gradient: "from-pink-500 to-red-500"
+      gradient: "from-pink-500 to-red-500",
+      detailedInfo: {
+        subtitle: "Growth & Scaling Resources",
+        details: [
+          "Direct access to VCs, angels, and institutional investors",
+          "Mentor matching with industry veterans and experts",
+          "Legal and financial resource center with templates",
+          "Market expansion strategies and growth hacking tools",
+          "Success metrics tracking and performance analytics"
+        ],
+        stats: { mentors: "200+", funded: "45+", network: "10K+" }
+      }
     }
   ];
 
@@ -284,7 +328,7 @@ const HomePage = () => {
       </section>
 
       <section className="py-20 px-4">
-        <Container maxWidth="lg">
+        <Container maxWidth="xl">
           <div className="text-center mb-16">
             <Fade in timeout={1000}>
               <div>
@@ -300,13 +344,13 @@ const HomePage = () => {
                 />
                 <Typography 
                   variant="h2" 
-                  className="text-3xl md:text-5xl font-bold text-white mb-6"
+                  className="text-2xl md:text-3xl font-bold text-white mb-6"
                   sx={{ 
                     background: 'linear-gradient(135deg, #10b981, #3b82f6)',
                     backgroundClip: 'text',
                     WebkitBackgroundClip: 'text',
                     color: 'transparent',
-                    fontWeight: 900,
+                    fontWeight: 700,
                     letterSpacing: '-0.025em'
                   }}
                 >
@@ -314,7 +358,7 @@ const HomePage = () => {
                 </Typography>
                 <Typography 
                   variant="h6" 
-                  className="text-gray-300 max-w-2xl mx-auto"
+                  className="text-gray-300 max-w-8xl mx-auto"
                   sx={{ 
                     fontSize: '1.2rem',
                     lineHeight: 1.6,
@@ -327,159 +371,340 @@ const HomePage = () => {
             </Fade>
           </div>
 
-          <Grid container spacing={4}>
+          <Box sx={{ maxWidth: '1400px', mx: 'auto' }}>
             {features.map((feature, index) => (
-              <Grid item xs={12} md={6} key={index}>
-                <Zoom in timeout={600 + index * 200}>
-                  <Card
-                    elevation={hoveredCard === index ? 20 : 5}
-                    sx={{
-                      height: '100%',
-                      background: `linear-gradient(135deg, ${feature.gradient.replace('from-', '').replace('to-', '').split(' ').map(color => {
-                        const colorMap = {
-                          'yellow-400': '#facc15',
-                          'orange-500': '#f97316',
-                          'blue-500': '#3b82f6',
-                          'purple-600': '#9333ea',
-                          'green-500': '#10b981',
-                          'teal-500': '#14b8a6',
-                          'pink-500': '#ec4899',
-                          'red-500': '#ef4444'
-                        };
-                        return colorMap[color] || '#3b82f6';
-                      }).join(', ')})`,
-                      padding: '2px',
-                      borderRadius: '16px',
-                      cursor: 'pointer',
-                      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                      transform: hoveredCard === index ? 'translateY(-8px) scale(1.02)' : 'translateY(0) scale(1)',
-                      boxShadow: hoveredCard === index 
-                        ? '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(59, 130, 246, 0.3)' 
-                        : '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
-                      '&:hover': {
-                        transform: 'translateY(-8px) scale(1.02)',
-                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(59, 130, 246, 0.3)'
-                      }
-                    }}
-                    onMouseEnter={() => setHoveredCard(index)}
-                    onMouseLeave={() => setHoveredCard(null)}
-                  >
-                    <CardContent
-                      sx={{
-                        background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9))',
-                        backdropFilter: 'blur(16px)',
-                        height: '100%',
-                        borderRadius: '14px',
-                        p: 4,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        '&:before': {
-                          content: '""',
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          height: '1px',
-                          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)'
-                        }
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                        <Box
-                          sx={{
-                            p: 2,
-                            borderRadius: '12px',
-                            background: `linear-gradient(135deg, ${feature.gradient.replace('from-', '').replace('to-', '').split(' ').map(color => {
-                              const colorMap = {
-                                'yellow-400': '#facc15',
-                                'orange-500': '#f97316',
-                                'blue-500': '#3b82f6',
-                                'purple-600': '#9333ea',
-                                'green-500': '#10b981',
-                                'teal-500': '#14b8a6',
-                                'pink-500': '#ec4899',
-                                'red-500': '#ef4444'
-                              };
-                              return colorMap[color] || '#3b82f6';
-                            }).join(', ')})`,
-                            color: 'white',
-                            mr: 2,
-                            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-                            transition: 'all 0.3s ease',
-                            ...(hoveredCard === index && {
-                              transform: 'rotate(5deg) scale(1.1)',
-                              boxShadow: '0 12px 40px rgba(0,0,0,0.4)'
-                            })
-                          }}
-                        >
-                          {feature.icon}
-                        </Box>
-                        <Typography 
-                          variant="h5" 
-                          sx={{ 
-                            color: 'white', 
-                            fontWeight: 700,
-                            fontSize: '1.5rem',
-                            letterSpacing: '-0.025em'
-                          }}
-                        >
-                          {feature.title}
-                        </Typography>
-                      </Box>
-                      
-                      <Typography 
-                        variant="body1" 
-                        sx={{ 
-                          color: 'rgba(203, 213, 225, 0.9)',
-                          lineHeight: 1.7,
-                          fontSize: '1.1rem',
-                          flexGrow: 1,
-                          fontWeight: 400
-                        }}
-                      >
-                        {feature.description}
-                      </Typography>
-
-                      <Box
+              <Box key={index} sx={{ mb: 6, position: 'relative' }}>
+                {/* Connecting Line Animation */}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '41.66%', // Between the two grid items (5/12 width)
+                    transform: 'translateY(-50%)',
+                    width: hoveredCard === index ? '16.66%' : '0%', // 2/12 width when expanded
+                    height: '3px',
+                    background: (() => {
+                      const gradientMap = {
+                        0: 'linear-gradient(90deg, rgba(251, 191, 36, 0.8), rgba(249, 115, 22, 0.8))',
+                        1: 'linear-gradient(90deg, rgba(59, 130, 246, 0.8), rgba(147, 51, 234, 0.8))',
+                        2: 'linear-gradient(90deg, rgba(16, 185, 129, 0.8), rgba(20, 184, 166, 0.8))',
+                        3: 'linear-gradient(90deg, rgba(236, 72, 153, 0.8), rgba(239, 68, 68, 0.8))'
+                      };
+                      return gradientMap[index];
+                    })(),
+                    borderRadius: '2px',
+                    transition: 'width 0.5s ease',
+                    boxShadow: hoveredCard === index 
+                      ? `0 0 15px ${(() => {
+                          const colorMap = {
+                            0: 'rgba(251, 191, 36, 0.5)',
+                            1: 'rgba(59, 130, 246, 0.5)',
+                            2: 'rgba(16, 185, 129, 0.5)',
+                            3: 'rgba(236, 72, 153, 0.5)'
+                          };
+                          return colorMap[index];
+                        })()}` 
+                      : 'none',
+                    zIndex: 10
+                  }}
+                />
+                <Grid container spacing={4} justifyContent="center" alignItems="center">
+                  {/* Feature Card - Center Left */}
+                  <Grid item xs={12} md={5}>
+                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                      <Zoom in timeout={600 + index * 200}>
+                      <Card
+                        elevation={hoveredCard === index ? 8 : 5}
                         sx={{
-                          mt: 3,
-                          pt: 2,
-                          borderTop: '1px solid rgba(255,255,255,0.1)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          opacity: hoveredCard === index ? 1 : 0.7,
-                          transition: 'all 0.3s ease'
-                        }}
-                      >
-                        <Typography 
-                          variant="caption" 
-                          sx={{ 
-                            color: 'rgba(156, 163, 175, 0.8)',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.1em',
-                            fontWeight: 600
+                          background: 'transparent',
+                          border: `2px solid ${hoveredCard === index 
+                            ? (() => {
+                                const borderMap = {
+                                  0: 'rgba(251, 191, 36, 0.6)',
+                                  1: 'rgba(59, 130, 246, 0.6)',
+                                  2: 'rgba(16, 185, 129, 0.6)',
+                                  3: 'rgba(236, 72, 153, 0.6)'
+                                };
+                                return borderMap[index];
+                              })()
+                            : 'rgba(255,255,255,0.1)'}`,
+                          borderRadius: '16px',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          height: '100%',
+                          transform: hoveredCard === index ? 'scale(1.02)' : 'scale(1)',
+                          boxShadow: (() => {
+                            const shadowMap = {
+                              0: hoveredCard === index 
+                                ? '0 20px 40px -8px rgba(251, 191, 36, 0.4), 0 6px 12px -2px rgba(249, 115, 22, 0.3)'
+                                : '0 10px 25px -5px rgba(251, 191, 36, 0.3), 0 4px 6px -2px rgba(249, 115, 22, 0.2)',
+                              1: hoveredCard === index 
+                                ? '0 20px 40px -8px rgba(59, 130, 246, 0.4), 0 6px 12px -2px rgba(147, 51, 234, 0.3)'
+                                : '0 10px 25px -5px rgba(59, 130, 246, 0.3), 0 4px 6px -2px rgba(147, 51, 234, 0.2)',
+                              2: hoveredCard === index 
+                                ? '0 20px 40px -8px rgba(16, 185, 129, 0.4), 0 6px 12px -2px rgba(20, 184, 166, 0.3)'
+                                : '0 10px 25px -5px rgba(16, 185, 129, 0.3), 0 4px 6px -2px rgba(20, 184, 166, 0.2)',
+                              3: hoveredCard === index 
+                                ? '0 20px 40px -8px rgba(236, 72, 153, 0.4), 0 6px 12px -2px rgba(239, 68, 68, 0.3)'
+                                : '0 10px 25px -5px rgba(236, 72, 153, 0.3), 0 4px 6px -2px rgba(239, 68, 68, 0.2)'
+                            };
+                            return shadowMap[index];
+                            })()
+                          }}
+                          onMouseEnter={() => setHoveredCard(index)}
+                          onMouseLeave={() => setHoveredCard(null)}
+                          >
+                          <CardContent
+                            sx={{
+                            background: 'transparent',
+                            borderRadius: '14px',
+                            p: 4,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            position: 'relative',
+                            overflow: 'hidden'
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                            <Box
+                              sx={{
+                              p: 2,
+                              borderRadius: '12px',
+                              background: 'transparent',
+                              border: '1px solid rgba(255,255,255,0.2)',
+                              color: 'white',
+                              mr: 2,
+                              transition: 'all 0.3s ease',
+                              }}
+                            >
+                              {feature.icon}
+                            </Box>
+                            <Typography 
+                              variant="h5" 
+                              sx={{ 
+                              color: 'white', 
+                              fontWeight: 700,
+                              fontSize: '1.5rem',
+                              letterSpacing: '-0.025em'
+                              }}
+                            >
+                              {feature.title}
+                            </Typography>
+                            </Box>
+                            
+                            <Typography 
+                            variant="body1" 
+                            sx={{ 
+                              color: 'rgba(203, 213, 225, 0.9)',
+                              lineHeight: 1.7,
+                              fontSize: '1.1rem',
+                              flexGrow: 1,
+                              fontWeight: 400,
+                              mb: 2
+                            }}
+                            >
+                            {feature.description}
+                            </Typography>
+
+                            <Box
+                            sx={{
+                              pt: 2,
+                              borderTop: '1px solid rgba(255,255,255,0.1)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all 0.3s ease'
+                            }}
+                            >
+                            <Typography 
+                              variant="caption" 
+                              sx={{ 
+                              color: 'rgba(156, 163, 175, 0.8)',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.1em',
+                              fontWeight: 600
+                              }}
+                            >
+                              Hover to connect →
+                            </Typography>
+                            </Box>
+                          </CardContent>
+                          </Card>
+                        </Zoom>
+                        </Box>
+                        </Grid>
+
+                        {/* Details Panel - Center Right */}
+                  <Grid item xs={12} md={7}>
+                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                      <Fade in timeout={800 + index * 300}>
+                        <Card
+                          elevation={hoveredCard === index ? 8 : 0}
+                          sx={{
+                            width: '100%',
+                            maxWidth: '600px',
+                            background: hoveredCard === index 
+                              ? (() => {
+                                  const bgMap = {
+                                    0: 'linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(249, 115, 22, 0.05))',
+                                    1: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.05))',
+                                    2: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(20, 184, 166, 0.05))',
+                                    3: 'linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(239, 68, 68, 0.05))'
+                                  };
+                                  return bgMap[index];
+                                })()
+                              : 'transparent',
+                            border: hoveredCard === index 
+                              ? `1px solid ${(() => {
+                                  const borderMap = {
+                                    0: 'rgba(251, 191, 36, 0.3)',
+                                    1: 'rgba(59, 130, 246, 0.3)',
+                                    2: 'rgba(16, 185, 129, 0.3)',
+                                    3: 'rgba(236, 72, 153, 0.3)'
+                                  };
+                                  return borderMap[index];
+                                })()}`
+                              : 'none',
+                            borderRadius: '16px',
+                            transition: 'all 0.5s ease',
+                            transform: hoveredCard === index ? 'scale(1.02)' : 'scale(1)',
+                            opacity: hoveredCard === index ? 1 : 0.7,
+                            boxShadow: hoveredCard === index 
+                              ? (() => {
+                                  const shadowMap = {
+                                    0: '0 8px 30px -4px rgba(251, 191, 36, 0.2)',
+                                    1: '0 8px 30px -4px rgba(59, 130, 246, 0.2)',
+                                    2: '0 8px 30px -4px rgba(16, 185, 129, 0.2)',
+                                    3: '0 8px 30px -4px rgba(236, 72, 153, 0.2)'
+                                  };
+                                  return shadowMap[index];
+                                })()
+                              : 'none'
                           }}
                         >
-                          Learn More
-                        </Typography>
-                        <ArrowForward 
-                          sx={{ 
-                            color: 'rgba(59, 130, 246, 0.8)',
-                            fontSize: '1.2rem',
-                            transition: 'all 0.3s ease',
-                            transform: hoveredCard === index ? 'translateX(4px)' : 'translateX(0)'
-                          }} 
-                        />
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Zoom>
-              </Grid>
+                          <CardContent sx={{ p: 4 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                              <Box
+                                sx={{
+                                  p: 2,
+                                  borderRadius: '12px',
+                                  background: `linear-gradient(135deg, ${feature.gradient.replace('from-', '').replace('to-', '').split(' ').map(color => {
+                                    const colorMap = {
+                                      'yellow-400': '#facc15',
+                                      'orange-500': '#f97316',
+                                      'blue-500': '#3b82f6',
+                                      'purple-600': '#9333ea',
+                                      'green-500': '#10b981',
+                                      'teal-500': '#14b8a6',
+                                      'pink-500': '#ec4899',
+                                      'red-500': '#ef4444'
+                                    };
+                                    return colorMap[color] || '#3b82f6';
+                                  }).join(', ')})`,
+                                  color: 'white',
+                                  mr: 2,
+                                  boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                                }}
+                              >
+                                {feature.icon}
+                              </Box>
+                              <Box>
+                                <Typography variant="h5" sx={{ color: 'white', fontWeight: 700, mb: 0.5 }}>
+                                  {feature.title}
+                                </Typography>
+                                <Typography variant="subtitle1" sx={{ color: 'rgba(203, 213, 225, 0.8)', fontSize: '0.9rem' }}>
+                                  {feature.detailedInfo.subtitle}
+                                </Typography>
+                              </Box>
+                            </Box>
+
+                            <Box sx={{ mb: 4 }}>
+                              <Typography variant="h6" sx={{ color: 'white', mb: 2, fontWeight: 600 }}>
+                                Key Features
+                              </Typography>
+                              {feature.detailedInfo.details.map((detail, idx) => (
+                                <Box key={idx} sx={{ display: 'flex', alignItems: 'flex-start', mb: 1.5 }}>
+                                  <CheckCircle 
+                                    sx={{ 
+                                      color: (() => {
+                                        const colorMap = {
+                                          0: '#facc15',
+                                          1: '#3b82f6',
+                                          2: '#10b981',
+                                          3: '#ec4899'
+                                        };
+                                        return colorMap[index];
+                                      })(),
+                                      fontSize: '1.1rem',
+                                      mr: 1.5,
+                                      mt: 0.1,
+                                      flexShrink: 0
+                                    }} 
+                                  />
+                                  <Typography variant="body2" sx={{ color: 'rgba(203, 213, 225, 0.9)', lineHeight: 1.5 }}>
+                                    {detail}
+                                  </Typography>
+                                </Box>
+                              ))}
+                            </Box>
+
+                            <Box
+                              sx={{
+                                p: 3,
+                                borderRadius: '12px',
+                                background: 'rgba(15, 23, 42, 0.6)',
+                                border: '1px solid rgba(255,255,255,0.1)'
+                              }}
+                            >
+                              <Typography variant="h6" sx={{ color: 'white', mb: 2, fontWeight: 600 }}>
+                                Live Stats
+                              </Typography>
+                              <Grid container spacing={2}>
+                                {Object.entries(feature.detailedInfo.stats).map(([key, value], idx) => (
+                                  <Grid item xs={4} key={key}>
+                                    <Box sx={{ textAlign: 'center' }}>
+                                      <Typography 
+                                        variant="h6" 
+                                        sx={{ 
+                                          color: (() => {
+                                            const colorMap = {
+                                              0: '#facc15',
+                                              1: '#3b82f6',
+                                              2: '#10b981',
+                                              3: '#ec4899'
+                                            };
+                                            return colorMap[index];
+                                          })(),
+                                          fontWeight: 700,
+                                          fontSize: '1.2rem'
+                                        }}
+                                      >
+                                        {value}
+                                      </Typography>
+                                      <Typography 
+                                        variant="caption" 
+                                        sx={{ 
+                                          color: 'rgba(156, 163, 175, 0.8)',
+                                          textTransform: 'capitalize',
+                                          fontSize: '0.7rem'
+                                        }}
+                                      >
+                                        {key}
+                                      </Typography>
+                                    </Box>
+                                  </Grid>
+                                ))}
+                              </Grid>
+                            </Box>
+                          </CardContent>
+                      </Card>
+                      </Fade>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Box>
             ))}
-          </Grid>
+          </Box>
         </Container>
       </section>
 
@@ -554,7 +779,7 @@ const HomePage = () => {
               See it in
               <span className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent"> action</span>
             </Typography>
-            <Typography variant="h6" className="text-gray-300 max-w-2xl mx-auto">
+            <Typography variant="h6" className="text-gray-300 max-w-8xl mx-auto">
               Real founders, real connections, real success stories happening right now
             </Typography>
           </div>
