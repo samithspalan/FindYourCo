@@ -8,17 +8,12 @@ import Dashboard from './components/Dashboard.jsx'
 import CreatePost from './pages/CreatePost.jsx'
 import AIChat from './pages/AIChat.jsx'
 import Matchings from './pages/Matchings.jsx'
+import App from './App.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
-        <Route path="/create-post" element={<Layout><CreatePost /></Layout>} />
-        <Route path="/ai-chat" element={<Layout><AIChat /></Layout>} />
-        <Route path="/matchings" element={<Layout><Matchings /></Layout>} />
-      </Routes>
+     <App />
     </BrowserRouter>
   </StrictMode>,
 )

@@ -11,7 +11,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useTheme } from './Layout.jsx';
-
+import  Spline  from '@splinetool/react-spline';
 const Dashboard = () => {
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState('for-you');
@@ -76,7 +76,10 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Twitter-like Header with Tabs */}
+      {activeTab === 'following' && (
+        <div className="fixed inset-0 -z-10 [filter:brightness(0.8)_contrast(0.8)_saturate(0.3)]">
+    <Spline scene="https://prod.spline.design/fo-uBqjXPPDger8A/scene.splinecode" />
+    </div>)}
       <div className={`sticky top-0 z-30 ${theme.sidebarBg} backdrop-blur-xl ${theme.border} border-b`}>
         {/* Tab Navigation */}
         <div className="flex">
@@ -96,7 +99,6 @@ const Dashboard = () => {
                 <span className="text-base">{tab.label}</span>
               </div>
               
-              {/* Active Tab Indicator */}
               {activeTab === tab.id && (
                 <motion.div
                   layoutId="activeTab"
@@ -109,7 +111,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Posts Feed */}
       <div className="max-w-2xl mx-auto">
         <div className="divide-y divide-gray-700/20">
           {activeTab === 'for-you' && mockPosts.map((post, index) => (

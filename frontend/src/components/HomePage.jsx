@@ -42,6 +42,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
+
 const HomePage = () => {
   const navigate = useNavigate();
   const [hoveredCard, setHoveredCard] = useState(null);
@@ -236,7 +237,7 @@ const HomePage = () => {
                 <Code className="text-white w-5 h-5" />
               </div>
               <Typography variant="h6" className="text-white font-bold">
-                CofounderConnect
+                FindYourCO
               </Typography>
             </div>
             <div className="flex items-center space-x-4">
@@ -264,7 +265,7 @@ const HomePage = () => {
           </div>
         </Container>
       </nav>
-
+       
       <section className="pt-32 pb-20 px-4">
         <Container maxWidth="lg" className="text-center">
           <div className="mb-8">
