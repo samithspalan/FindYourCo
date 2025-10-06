@@ -41,7 +41,6 @@ const CreatePost = () => {
   };
 
   const handleSubmit = () => {
-    // Handle post submission
     console.log({
       content: postContent,
       tags: selectedTags,
@@ -55,7 +54,7 @@ const CreatePost = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
-      {/* Header */}
+   
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -82,12 +81,12 @@ const CreatePost = () => {
         </div>
       </motion.div>
 
-      {/* Main Content */}
+      
       <div className="max-w-4xl mx-auto px-6 py-8">
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Post Creation Form */}
+          
           <div className="lg:col-span-2 space-y-6">
-            {/* Main Post Input */}
+            
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -126,7 +125,7 @@ const CreatePost = () => {
               </div>
             </motion.div>
 
-            {/* Industry Tags */}
+       
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

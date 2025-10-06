@@ -16,6 +16,7 @@ const Dashboard = () => {
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState('for-you');
 
+
   const mockPosts = [
     {
       id: 1,
@@ -76,12 +77,8 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen">
-      {activeTab === 'following' && (
-        <div className="fixed inset-0 -z-10 [filter:brightness(0.8)_contrast(0.8)_saturate(0.3)]">
-    <Spline scene="https://prod.spline.design/fo-uBqjXPPDger8A/scene.splinecode" />
-    </div>)}
       <div className={`sticky top-0 z-30 ${theme.sidebarBg} backdrop-blur-xl ${theme.border} border-b`}>
-        {/* Tab Navigation */}
+     
         <div className="flex">
           {tabs.map((tab) => (
             <motion.button
@@ -121,7 +118,7 @@ const Dashboard = () => {
               transition={{ delay: index * 0.1 }}
               className={`px-4 py-4 ${theme.hover} transition-colors cursor-pointer border-b ${theme.border}/20`}
             >
-              {/* Post Header */}
+            
               <div className="flex space-x-3">
                 <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
                   {post.author.avatar}
@@ -138,12 +135,9 @@ const Dashboard = () => {
                     <span className={`${theme.textMuted} text-sm`}>{post.time}</span>
                   </div>
                   
-                  {/* Post Content */}
                   <div className="mb-3">
                     <p className={`${theme.textSecondary} leading-relaxed`}>{post.content}</p>
                   </div>
-
-                  {/* Tags */}
                   {post.tags && (
                     <div className="flex flex-wrap gap-2 mb-3">
                       {post.tags.map((tag, tagIndex) => (
@@ -156,8 +150,6 @@ const Dashboard = () => {
                     ))}
                   </div>
                 )}
-
-                  {/* Post Actions */}
                   <div className="flex items-center justify-between max-w-md mt-3">
                     <motion.button
                       whileHover={{ scale: 1.1 }}

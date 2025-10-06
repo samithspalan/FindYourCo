@@ -112,7 +112,7 @@ const Matchings = () => {
     }
   ];
 
-  // Sort matches by percentage (highest first)
+ 
   const sortedMatches = [...matches].sort((a, b) => b.matchPercentage - a.matchPercentage);
 
   const getMatchColor = (percentage) => {
@@ -131,7 +131,7 @@ const Matchings = () => {
 
   return (
     <div className="w-full px-6 py-8">
-      {/* Header */}
+      
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -162,7 +162,7 @@ const Matchings = () => {
       </motion.div>
 
       <div className="flex gap-8">
-        {/* Sidebar Filters */}
+       
         <div className="w-64 space-y-6">
           <motion.div
             initial={{ opacity: 0, x: -20 }}

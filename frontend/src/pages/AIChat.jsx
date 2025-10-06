@@ -111,16 +111,13 @@ const AIChat = () => {
 
   return (
     <div className="relative h-full flex flex-col overflow-hidden">
-      {/* Particle Background */}
+    
       <ParticleBackground />
-      
-      {/* Main Container */}
+  
       <div className="relative z-10 flex flex-col h-full max-w-4xl mx-auto w-full px-4" style={{ zIndex: 10 }}>
         
-        {/* Chat Messages Area */}
         <div className="flex-1 overflow-y-auto py-8">
           
-          {/* Welcome Screen */}
           {showWelcome && (
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
@@ -145,7 +142,6 @@ const AIChat = () => {
                 </p>
               </motion.div>
 
-              {/* Quick Start Prompts */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -174,7 +170,6 @@ const AIChat = () => {
             </motion.div>
           )}
 
-          {/* Chat Messages */}
           {!showWelcome && (
             <div className="space-y-6 pb-6">
               <AnimatePresence>
@@ -212,7 +207,6 @@ const AIChat = () => {
                 ))}
               </AnimatePresence>
 
-              {/* Typing Indicator */}
               {isTyping && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -239,7 +233,6 @@ const AIChat = () => {
           )}
         </div>
 
-        {/* ChatGPT-style Input Area */}
         <div className="sticky bottom-0 p-4">
           <div className="max-w-3xl mx-auto">
             <div className={`relative ${theme.cardBg} backdrop-blur-xl ${theme.border} border rounded-3xl shadow-2xl overflow-hidden`}>
@@ -261,11 +254,9 @@ const AIChat = () => {
                 }}
               />
               
-              {/* Send Button */}
+            
               <motion.button
-                whileHover={{ scale: currentMessage.trim() ? 1.05 : 1 }}
                 whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.2, ease: "easeInOut" }}
                 onClick={handleSendMessage}
                 disabled={!currentMessage.trim()}
                 className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full transition-all duration-200 ${
@@ -278,7 +269,6 @@ const AIChat = () => {
               </motion.button>
             </div>
             
-            {/* Footer Text */}
             <p className={`text-xs ${theme.textMuted} text-center mt-3`}>
               AI Assistant can make mistakes. Consider checking important information.
             </p>
