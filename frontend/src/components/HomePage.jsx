@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   Button, 
   Container, 
@@ -89,6 +89,8 @@ const HomePage = () => {
   const [loading, setLoading] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [showProgress, setShowProgress] = useState(false);
+  const [visibleActivities, setVisibleActivities] = useState(new Set());
+  const activityRefs = useRef([]);
 
   const coWord = 'Cofounders';
   const coLetters = Array.from(coWord.slice(1)); // 'ofounders'
@@ -111,6 +113,70 @@ const HomePage = () => {
       navigate('/dashboard');
     }, 1500);
   };
+
+  // Live activity data
+  const liveActivities = [
+    {
+      id: 1,
+      avatar: 'SC',
+      avatarColor: 'bg-blue-500',
+      name: 'Sarah Chen',
+      action: 'just posted a new idea',
+      time: '2 minutes ago',
+      tag: 'AI/ML',
+      tagColor: 'bg-purple-500/20 text-purple-300'
+    },
+    {
+      id: 2,
+      avatar: 'MK',
+      avatarColor: 'bg-green-500',
+      name: 'Mike Kumar',
+      action: 'found a co-founder match',
+      time: '5 minutes ago',
+      tag: 'Fintech',
+      tagColor: 'bg-green-500/20 text-green-300'
+    },
+    {
+      id: 3,
+      avatar: 'EW',
+      avatarColor: 'bg-orange-500',
+      name: 'Emma Wilson',
+      action: 'launched their startup',
+      time: '12 minutes ago',
+      tag: 'SaaS',
+      tagColor: 'bg-orange-500/20 text-orange-300'
+    },
+    {
+      id: 4,
+      avatar: 'RL',
+      avatarColor: 'bg-purple-500',
+      name: 'Robert Lee',
+      action: 'joined as technical co-founder',
+      time: '18 minutes ago',
+      tag: 'Blockchain',
+      tagColor: 'bg-indigo-500/20 text-indigo-300'
+    },
+    {
+      id: 5,
+      avatar: 'AM',
+      avatarColor: 'bg-pink-500',
+      name: 'Anna Martinez',
+      action: 'secured $50K seed funding',
+      time: '25 minutes ago',
+      tag: 'EdTech',
+      tagColor: 'bg-pink-500/20 text-pink-300'
+    },
+    {
+      id: 6,
+      avatar: 'JT',
+      avatarColor: 'bg-teal-500',
+      name: 'James Thompson',
+      action: 'completed MVP development',
+      time: '32 minutes ago',
+      tag: 'HealthTech',
+      tagColor: 'bg-teal-500/20 text-teal-300'
+    }
+  ];
 
   const handleSubscribe = async () => {
     if (!email) return;
@@ -306,6 +372,39 @@ const HomePage = () => {
     return () => clearInterval(interval);
   }, [testimonials.length]);
 
+  // Simple scroll animation for live activity items
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const activityIndex = parseInt(entry.target.getAttribute('data-activity-index'));
+          if (entry.isIntersecting) {
+            // Add items one by one with a delay
+            setTimeout(() => {
+              setVisibleActivities(prev => new Set([...prev, activityIndex]));
+            }, activityIndex * 300); // 300ms delay between each item
+          }
+        });
+      },
+      { 
+        threshold: 0.2,
+        rootMargin: '50px'
+      }
+    );
+
+    // Observe the container instead of individual items
+    const container = document.querySelector('[data-activity-container]');
+    if (container) {
+      observer.observe(container);
+    }
+
+    return () => {
+      if (container) {
+        observer.unobserve(container);
+      }
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
      
@@ -353,7 +452,7 @@ const HomePage = () => {
           <style>{`
   @keyframes fycoSweepGlow {
     0%   { transform: translate(-50%, 0) scale(0.6); opacity: 0.5; filter: blur(8px); }
-    60%  { opacity: 0.85; }
+    60%  { opacity: 0.75; }
     100% { transform: translate(-50%, 0) scale(2.4); opacity: 0.08; filter: blur(26px); }
   }
 `}</style>
@@ -508,7 +607,12 @@ const HomePage = () => {
 
           <Box sx={{ maxWidth: '1400px', mx: 'auto' }}>
             {features.map((feature, index) => (
-              <Box key={index} sx={{ mb: 6, position: 'relative' }}>
+              <Box 
+                key={index} 
+                sx={{ mb: 6, position: 'relative' }}
+                onMouseEnter={() => setHoveredCard(index)}
+                onMouseLeave={() => setHoveredCard(null)}
+              >
                 {/* Connecting Line Animation */}
                 <Box
                   sx={{
@@ -586,8 +690,6 @@ const HomePage = () => {
                             return shadowMap[index];
                             })()
                           }}
-                          onMouseEnter={() => setHoveredCard(index)}
-                          onMouseLeave={() => setHoveredCard(null)}
                           >
                           <CardContent
                             sx={{
@@ -843,11 +945,11 @@ const HomePage = () => {
         </Container>
       </section>
 
-      {/* Live Activity Stream - Modern Real-time Feed */}
+    
       <section className="py-16 px-4">
         <Container maxWidth="lg">
           <div className="relative overflow-hidden">
-            {/* Animated background */}
+         
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-pink-500/5 animate-pulse"></div>
             
             <div className="relative backdrop-blur-sm border border-white/10 rounded-2xl p-6">
@@ -867,39 +969,38 @@ const HomePage = () => {
                 />
               </div>
               
-              <div className="space-y-3">
-                <div className="flex items-center gap-4 p-3 rounded-lg bg-slate-800/50 border border-white/5">
-                  <Avatar className="w-8 h-8 bg-blue-500">SC</Avatar>
-                  <div className="flex-1">
-                    <Typography variant="body2" className="text-white">
-                      <span className="font-semibold">Sarah Chen</span> just posted a new idea
-                    </Typography>
-                    <Typography variant="caption" className="text-gray-400">2 minutes ago</Typography>
+              <div className="space-y-3" data-activity-container>
+                {liveActivities.map((activity, index) => (
+                  <div
+                    key={activity.id}
+                    data-activity-index={index}
+                    className={`flex items-center gap-4 p-3 rounded-lg bg-slate-800/50 border border-white/5 transition-all duration-500 ease-out ${
+                      visibleActivities.has(index)
+                        ? 'opacity-100 transform translate-y-0'
+                        : 'opacity-0 transform translate-y-4'
+                    }`}
+                    style={{
+                      transitionDelay: `${index * 100}ms`
+                    }}
+                  >
+                    <Avatar className={`w-8 h-8 ${activity.avatarColor}`}>
+                      {activity.avatar}
+                    </Avatar>
+                    <div className="flex-1">
+                      <Typography variant="body2" className="text-white">
+                        <span className="font-semibold">{activity.name}</span> {activity.action}
+                      </Typography>
+                      <Typography variant="caption" className="text-gray-400">
+                        {activity.time}
+                      </Typography>
+                    </div>
+                    <Chip 
+                      label={activity.tag} 
+                      size="small" 
+                      className={activity.tagColor}
+                    />
                   </div>
-                  <Chip label="AI/ML" size="small" className="bg-purple-500/20 text-purple-300" />
-                </div>
-                
-                <div className="flex items-center gap-4 p-3 rounded-lg bg-slate-800/50 border border-white/5">
-                  <Avatar className="w-8 h-8 bg-green-500">MK</Avatar>
-                  <div className="flex-1">
-                    <Typography variant="body2" className="text-white">
-                      <span className="font-semibold">Mike Kumar</span> found a co-founder match
-                    </Typography>
-                    <Typography variant="caption" className="text-gray-400">5 minutes ago</Typography>
-                  </div>
-                  <Chip label="Fintech" size="small" className="bg-green-500/20 text-green-300" />
-                </div>
-                
-                <div className="flex items-center gap-4 p-3 rounded-lg bg-slate-800/50 border border-white/5">
-                  <Avatar className="w-8 h-8 bg-orange-500">EW</Avatar>
-                  <div className="flex-1">
-                    <Typography variant="body2" className="text-white">
-                      <span className="font-semibold">Emma Wilson</span> launched their startup
-                    </Typography>
-                    <Typography variant="caption" className="text-gray-400">12 minutes ago</Typography>
-                  </div>
-                  <Chip label="SaaS" size="small" className="bg-orange-500/20 text-orange-300" />
-                </div>
+                ))}
               </div>
             </div>
           </div>
