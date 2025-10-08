@@ -11,12 +11,11 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useTheme } from './Layout.jsx';
-import Toast from './Toast';
-import { useLocation, useNavigate } from 'react-router-dom';
-
+import  Spline  from '@splinetool/react-spline';
 const Dashboard = () => {
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState('for-you');
+
 
   const mockPosts = [
     {
@@ -78,10 +77,8 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen">
-      <DashboardToastHandler />
-      {/* Twitter-like Header with Tabs */}
       <div className={`sticky top-0 z-30 ${theme.sidebarBg} backdrop-blur-xl ${theme.border} border-b`}>
-        {/* Tab Navigation */}
+     
         <div className="flex">
           {tabs.map((tab) => (
             <motion.button
@@ -99,7 +96,6 @@ const Dashboard = () => {
                 <span className="text-base">{tab.label}</span>
               </div>
               
-              {/* Active Tab Indicator */}
               {activeTab === tab.id && (
                 <motion.div
                   layoutId="activeTab"
@@ -112,7 +108,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Posts Feed */}
       <div className="max-w-2xl mx-auto">
         <div className="divide-y divide-gray-700/20">
           {activeTab === 'for-you' && mockPosts.map((post, index) => (
@@ -123,7 +118,7 @@ const Dashboard = () => {
               transition={{ delay: index * 0.1 }}
               className={`px-4 py-4 ${theme.hover} transition-colors cursor-pointer border-b ${theme.border}/20`}
             >
-              {/* Post Header */}
+            
               <div className="flex space-x-3">
                 <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
                   {post.author.avatar}
@@ -140,12 +135,9 @@ const Dashboard = () => {
                     <span className={`${theme.textMuted} text-sm`}>{post.time}</span>
                   </div>
                   
-                  {/* Post Content */}
                   <div className="mb-3">
                     <p className={`${theme.textSecondary} leading-relaxed`}>{post.content}</p>
                   </div>
-
-                  {/* Tags */}
                   {post.tags && (
                     <div className="flex flex-wrap gap-2 mb-3">
                       {post.tags.map((tag, tagIndex) => (
@@ -158,8 +150,6 @@ const Dashboard = () => {
                     ))}
                   </div>
                 )}
-
-                  {/* Post Actions */}
                   <div className="flex items-center justify-between max-w-md mt-3">
                     <motion.button
                       whileHover={{ scale: 1.1 }}

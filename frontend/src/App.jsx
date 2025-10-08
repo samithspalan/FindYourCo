@@ -1,37 +1,22 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { Routes, Route } from 'react-router-dom';
+import HomePage from './components/HomePage.jsx'
+import Layout from './components/Layout.jsx'
+import Dashboard from './components/Dashboard.jsx'
+import CreatePost from './pages/CreatePost.jsx'
+import AIChat from './pages/AIChat.jsx'
+import Matchings from './pages/Matchings.jsx'
 
 function App() {
-  const [count, setCount] = useState(0)
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-8">
-      <div className="flex gap-8 mb-8">
-        <a href="https://vite.dev" target="_blank" className="hover:opacity-80 transition-opacity">
-          <img src={viteLogo} className="w-24 h-24" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank" className="hover:opacity-80 transition-opacity">
-          <img src={reactLogo} className="w-24 h-24 animate-spin" alt="React logo" />
-        </a>
-      </div>
-      <h1 className="text-6xl font-bold text-gray-800 mb-8">Vite + React</h1>
-      <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
-        <button 
-          onClick={() => setCount((count) => count + 1)}
-          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg transition-colors mb-4"
-        >
-          count is {count}
-        </button>
-        <p className="text-gray-600">
-          Edit <code className="bg-gray-100 px-2 py-1 rounded text-sm">src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="text-gray-500 mt-8 text-center">
-        Click on the Vite and React logos to learn more
-      </p>
-    </div>
-  )
-}
+    <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+        <Route path="/create-post" element={<Layout><CreatePost /></Layout>} />
+        <Route path="/ai-chat" element={<Layout><AIChat /></Layout>} />
+        <Route path="/matchings" element={<Layout><Matchings /></Layout>} />
+      </Routes>
+  
+  )}
 
-export default App
+export default App;

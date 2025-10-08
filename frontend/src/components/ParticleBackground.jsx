@@ -11,7 +11,6 @@ const ParticleBackground = () => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     
-    // Set canvas size
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -20,7 +19,7 @@ const ParticleBackground = () => {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    // Particle class
+  
     class Particle {
       constructor() {
         this.x = Math.random() * canvas.width;
@@ -35,7 +34,6 @@ const ParticleBackground = () => {
         this.x += this.vx;
         this.y += this.vy;
 
-        // Wrap around edges
         if (this.x < 0) this.x = canvas.width;
         if (this.x > canvas.width) this.x = 0;
         if (this.y < 0) this.y = canvas.height;
@@ -45,7 +43,6 @@ const ParticleBackground = () => {
       draw() {
         ctx.save();
         ctx.globalAlpha = this.opacity;
-        // Make particles more visible with glow effect
         ctx.fillStyle = isDarkMode ? '#60A5FA' : '#2563EB';
         ctx.shadowColor = isDarkMode ? '#60A5FA' : '#2563EB';
         ctx.shadowBlur = 10;
@@ -56,7 +53,6 @@ const ParticleBackground = () => {
       }
     }
 
-    // Create particles
     const createParticles = () => {
       particlesRef.current = [];
       const particleCount = Math.min(150, Math.floor((canvas.width * canvas.height) / 10000));
@@ -66,12 +62,8 @@ const ParticleBackground = () => {
       }
     };
 
-    // Animation loop
     const animate = () => {
-      // Clear canvas completely first
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      // Fill with base background
       if (isDarkMode) {
         ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
       } else {
@@ -79,13 +71,11 @@ const ParticleBackground = () => {
       }
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Update and draw particles
       particlesRef.current.forEach(particle => {
         particle.update();
         particle.draw();
       });
 
-      // Draw connections
       ctx.strokeStyle = isDarkMode ? 'rgba(96, 165, 250, 0.3)' : 'rgba(37, 99, 235, 0.3)';
       ctx.lineWidth = 1.5;
 

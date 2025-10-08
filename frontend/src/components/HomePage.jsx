@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   Button, 
   Container, 
@@ -41,9 +41,43 @@ import {
   Analytics
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import LoginModal from './LoginModal';
-import Toast from './Toast';
-import { signUp, signIn, signOut, getUser, supabase } from '../lib/supabaseClient';
+
+
+function useAnimatedNumber(target, { duration = 1200, pause = 3000, loop = true } = {}) {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    let rafId;
+    let timeoutId;
+    let startTs;
+    const from = 0;
+    const parsed = Number(target);
+    const to = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+    const safeDuration = Math.max(0, Number(duration) || 0);
+    const safePause = Math.max(0, Number(pause) || 0);
+    const step = (ts) => {
+      if (startTs === undefined) startTs = ts;
+      const progress = safeDuration === 0 ? 1 : Math.min((ts - startTs) / safeDuration, 1);
+      const current = from + (to - from) * progress;
+      setValue(current);
+      if (progress < 1) {
+        rafId = requestAnimationFrame(step);
+      } else if (loop) {
+        timeoutId = setTimeout(() => {
+          startTs = undefined;
+          setValue(0);
+          rafId = requestAnimationFrame(step);
+        }, safePause);
+      }
+    };
+    rafId = requestAnimationFrame(step);
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [target, duration, pause, loop]);
+  return value;
+}
+
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -55,9 +89,22 @@ const HomePage = () => {
   const [loading, setLoading] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [showProgress, setShowProgress] = useState(false);
-  const [loginOpen, setLoginOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [toast, setToast] = useState({ open: false, message: '', action: null, duration: 3000 });
+  const [visibleActivities, setVisibleActivities] = useState(new Set());
+  const activityRefs = useRef([]);
+
+  const coWord = 'Cofounders';
+  const coLetters = Array.from(coWord.slice(1)); // 'ofounders'
+  const [coIndex, setCoIndex] = useState(0);
+  useEffect(() => {
+    let timer;
+    if (coIndex < coLetters.length) {
+      timer = setTimeout(() => setCoIndex((i) => i + 1), 140);
+    } else {
+      // pause before looping
+      timer = setTimeout(() => setCoIndex(0), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [coIndex, coLetters.length]);
 
   const handleOpenLogin = () => setLoginOpen(true);
 
@@ -108,29 +155,69 @@ const HomePage = () => {
   setToast({ open: true, message: 'Logged out', action: 'navigateHome', duration: 3000 });
   };
 
-  // Check session on mount
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const { data } = await getUser();
-        if (mounted && data?.user) setIsLoggedIn(true);
-      } catch (e) {
-        // ignore
-      }
-    })();
-
-    // Listen for auth changes to update UI
-    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN') setIsLoggedIn(true);
-      if (event === 'SIGNED_OUT') setIsLoggedIn(false);
-    });
-
-    return () => {
-      mounted = false;
-      if (listener?.subscription) listener.subscription.unsubscribe();
-    };
-  }, []);
+  // Live activity data
+  const liveActivities = [
+    {
+      id: 1,
+      avatar: 'SC',
+      avatarColor: 'bg-blue-500',
+      name: 'Sarah Chen',
+      action: 'just posted a new idea',
+      time: '2 minutes ago',
+      tag: 'AI/ML',
+      tagColor: 'bg-purple-500/20 text-purple-300'
+    },
+    {
+      id: 2,
+      avatar: 'MK',
+      avatarColor: 'bg-green-500',
+      name: 'Mike Kumar',
+      action: 'found a co-founder match',
+      time: '5 minutes ago',
+      tag: 'Fintech',
+      tagColor: 'bg-green-500/20 text-green-300'
+    },
+    {
+      id: 3,
+      avatar: 'EW',
+      avatarColor: 'bg-orange-500',
+      name: 'Emma Wilson',
+      action: 'launched their startup',
+      time: '12 minutes ago',
+      tag: 'SaaS',
+      tagColor: 'bg-orange-500/20 text-orange-300'
+    },
+    {
+      id: 4,
+      avatar: 'RL',
+      avatarColor: 'bg-purple-500',
+      name: 'Robert Lee',
+      action: 'joined as technical co-founder',
+      time: '18 minutes ago',
+      tag: 'Blockchain',
+      tagColor: 'bg-indigo-500/20 text-indigo-300'
+    },
+    {
+      id: 5,
+      avatar: 'AM',
+      avatarColor: 'bg-pink-500',
+      name: 'Anna Martinez',
+      action: 'secured $50K seed funding',
+      time: '25 minutes ago',
+      tag: 'EdTech',
+      tagColor: 'bg-pink-500/20 text-pink-300'
+    },
+    {
+      id: 6,
+      avatar: 'JT',
+      avatarColor: 'bg-teal-500',
+      name: 'James Thompson',
+      action: 'completed MVP development',
+      time: '32 minutes ago',
+      tag: 'HealthTech',
+      tagColor: 'bg-teal-500/20 text-teal-300'
+    }
+  ];
 
   const handleSubscribe = async () => {
     if (!email) return;
@@ -214,6 +301,24 @@ const HomePage = () => {
     }
   ];
 
+  // Animated stats values (top-level hooks usage)
+  const usersTarget = Math.floor(liveStats.users / 1000); // K
+  const ideasTarget = Math.floor((liveStats.ideas / 1000) * 10) / 10; // K with 1 decimal
+  const teamsTarget = liveStats.teams;
+  const startupsTarget = liveStats.startups;
+
+  const usersVal = useAnimatedNumber(usersTarget, { duration: 1200, pause: 3000, loop: true });
+  const ideasVal = useAnimatedNumber(ideasTarget, { duration: 1200, pause: 3000, loop: true });
+  const teamsVal = useAnimatedNumber(teamsTarget, { duration: 1200, pause: 3000, loop: true });
+  const startupsVal = useAnimatedNumber(startupsTarget, { duration: 1200, pause: 3000, loop: true });
+
+  const animatedStats = [
+    { label: 'Active Users', display: `${Math.floor(usersVal)}K+` },
+    { label: 'Ideas Shared', display: `${Math.max(0, ideasVal).toFixed(1)}K+` },
+    { label: 'Teams Formed', display: `${Math.floor(teamsVal)}+` },
+    { label: 'Startups Launched', display: `${Math.floor(startupsVal)}+` }
+  ];
+
   const stats = [
     { number: `${Math.floor(liveStats.users/1000)}K+`, label: "Active Users" },
     { number: `${Math.floor(liveStats.ideas/1000*10)/10}K+`, label: "Ideas Shared" },
@@ -235,14 +340,28 @@ const HomePage = () => {
       avatar: "MR",
       content: "The platform's idea validation features saved us months of development time.",
       company: "500K users"
-    },
+    },  
     {
       name: "Emily Watson",
       role: "Founder, EcoTrack",
       avatar: "EW",
       content: "Connected with amazing talent. Our team went from 1 to 15 people!",
       company: "Series A"
-    }
+    },
+   {
+    name:"John Doe",
+    role:"CEO, TechFlow",
+    avatar:"JD",
+    content:"Found my perfect co-founder in just 2 weeks. The AI matching is incredible!",
+    company:"$2M raised"
+   },
+   {
+    name:"Jane Smith",
+    role:"CEO, TechFlow",
+    avatar:"JS",
+    content:"Found my perfect co-founder in just 2 weeks. The AI matching is incredible!",
+    company:"$2M raised"
+   }
   ];
 
   const tabData = [
@@ -275,7 +394,6 @@ const HomePage = () => {
     }
   ];
 
-  // Live stats simulation
   useEffect(() => {
     const interval = setInterval(() => {
       setLiveStats(prev => ({
@@ -288,17 +406,49 @@ const HomePage = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-advance testimonials
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTestimonial(prev => (prev + 1) % testimonials.length);
-    }, 4000);
+    }, 2000);
     return () => clearInterval(interval);
   }, [testimonials.length]);
 
+  // Simple scroll animation for live activity items
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const activityIndex = parseInt(entry.target.getAttribute('data-activity-index'));
+          if (entry.isIntersecting) {
+            // Add items one by one with a delay
+            setTimeout(() => {
+              setVisibleActivities(prev => new Set([...prev, activityIndex]));
+            }, activityIndex * 300); // 300ms delay between each item
+          }
+        });
+      },
+      { 
+        threshold: 0.2,
+        rootMargin: '50px'
+      }
+    );
+
+    // Observe the container instead of individual items
+    const container = document.querySelector('[data-activity-container]');
+    if (container) {
+      observer.observe(container);
+    }
+
+    return () => {
+      if (container) {
+        observer.unobserve(container);
+      }
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      {/* Navigation */}
+     
       <nav className="fixed top-0 w-full z-50 backdrop-blur-md bg-black/20 border-b border-white/10">
         <Container maxWidth="xl" className="py-4">
           <div className="flex justify-between items-center">
@@ -307,13 +457,14 @@ const HomePage = () => {
                 <Code className="text-white w-5 h-5" />
               </div>
               <Typography variant="h6" className="text-white font-bold">
-                CofounderConnect
+                Find<span className="text-blue-500 font-bold">Your</span>
+                <span className="text-pink-500 font-bold">Co</span>
               </Typography>
             </div>
             <div className="flex items-center space-x-4">
               <Button 
                 variant="outlined" 
-                className="text-white border-white/30 hover:border-white/50"
+                className="text-white border-white/30 hover:border-white/50 "
               >
                 About
               </Button>
@@ -341,32 +492,85 @@ const HomePage = () => {
           </div>
         </Container>
       </nav>
-
+       
       <section className="pt-32 pb-20 px-4">
         <Container maxWidth="lg" className="text-center">
-          <div className="mb-8">
-            {/* <Chip 
-              label="✨ Now in Beta" 
-              className="bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-white/20 mb-6"
-            /> */}
-          </div>
+          <div className="relative flex flex-col items-center">
+          <style>{`
+  @keyframes fycoSweepGlow {
+    0%   { transform: translate(-50%, 0) scale(0.6); opacity: 0.5; filter: blur(8px); }
+    60%  { opacity: 0.75; }
+    100% { transform: translate(-50%, 0) scale(2.4); opacity: 0.08; filter: blur(26px); }
+  }
+`}</style>
+            </div>
+            <div className="mb-8">
+              <Chip 
+                label="✨ Now in Beta" 
+                className="bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-white/20 mb-1 -mt-10"
+              />
+            </div>
+            <div
+              className="pointer-events-none absolute  left-1/2 z-0"
+              style={{
+                top: '14rem',
+                width: '48px',
+                height: '48px',
+                background: 'radial-gradient(closest-side, rgba(99,102,241,0.95) 0%, rgba(59,130,246,0.75) 40%, rgba(147,51,234,0.55) 60%, rgba(236,72,153,0.0) 82%)',
+                boxShadow: '0 0 40px 16px rgba(99,102,241,0.25), 0 0 80px 24px rgba(236,72,153,0.2)',
+                mixBlendMode: 'screen',
+                animation: 'fycoSweepGlow 3.2s ease-in-out infinite',
+              }}
+            />
+            {/* Secondary trailing glow */}
+            <div
+              className="pointer-events-none absolute  left-1/2 z-0"
+              style={{
+                top: '14rem',
+                width: '72px',
+                height: '72px',
+                background: 'radial-gradient(closest-side, rgba(99,102,241,0.45) 0%, rgba(59,130,246,0.35) 40%, rgba(147,51,234,0.25) 60%, rgba(236,72,153,0.0) 82%)',
+                boxShadow: '0 0 30px 12px rgba(99,102,241,0.18), 0 0 60px 18px rgba(236,72,153,0.15)',
+                mixBlendMode: 'screen',
+                animation: 'fycoSweepGlow 3.2s ease-in-out infinite',
+                animationDelay: '0.45s',
+              }}
+            />
           
-          <Typography 
-            variant="h1" 
-            className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight"
-          >
+            <Typography 
+              variant="h1" 
+              className="relative z-10 text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight"
+            >
             Where
             <span className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent"> Ideas </span>
             Meet
-            <span className="bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent"> Cofounders</span>
+           
+            <span className="relative inline-block align-baseline ml-1">
+              <span className="invisible bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent"> Cofounders</span>
+              <span className="absolute inset-0 pointer-events-none">
+                <span className="bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent whitespace-pre">
+              
+                  {' '}C 
+                  {coLetters.map((ch, idx) => (
+                    <span
+                      key={idx}
+                      className={`inline-block transition-all duration-200 ease-out ${idx < coIndex ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'} bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent`}
+                      style={{ willChange: 'transform, opacity' }}
+                    >
+                      {ch}
+                    </span>
+                  ))}
+                </span>
+              </span>
+            </span>
           </Typography>
           
           <Typography 
             variant="h5" 
             className="text-gray-300 mb-12 py-10 mx-auto leading-relaxed"
           >
-            The X-style platform for entrepreneurs to share innovative ideas, 
-            connect with potential cofounders, and build the next big thing together.
+           The next-generation platform where entrepreneurs share bold ideas, connect with visionary cofounders, and turn groundbreaking concepts into reality.
+
           </Typography>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
@@ -396,13 +600,13 @@ const HomePage = () => {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-2xl mx-auto">
-            {stats.map((stat, index) => (
+            {animatedStats.map((s, index) => (
               <div key={index} className="text-center">
                 <Typography variant="h3" className="text-white font-bold mb-1">
-                  {stat.number}
+                  {s.display}
                 </Typography>
                 <Typography variant="body2" className="text-gray-400">
-                  {stat.label}
+                  {s.label}
                 </Typography>
               </div>
             ))}
@@ -468,7 +672,12 @@ const HomePage = () => {
 
           <Box sx={{ maxWidth: '1400px', mx: 'auto' }}>
             {features.map((feature, index) => (
-              <Box key={index} sx={{ mb: 6, position: 'relative' }}>
+              <Box 
+                key={index} 
+                sx={{ mb: 6, position: 'relative' }}
+                onMouseEnter={() => setHoveredCard(index)}
+                onMouseLeave={() => setHoveredCard(null)}
+              >
                 {/* Connecting Line Animation */}
                 <Box
                   sx={{
@@ -546,8 +755,6 @@ const HomePage = () => {
                             return shadowMap[index];
                             })()
                           }}
-                          onMouseEnter={() => setHoveredCard(index)}
-                          onMouseLeave={() => setHoveredCard(null)}
                           >
                           <CardContent
                             sx={{
@@ -803,11 +1010,11 @@ const HomePage = () => {
         </Container>
       </section>
 
-      {/* Live Activity Stream - Modern Real-time Feed */}
+    
       <section className="py-16 px-4">
         <Container maxWidth="lg">
           <div className="relative overflow-hidden">
-            {/* Animated background */}
+         
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-pink-500/5 animate-pulse"></div>
             
             <div className="relative backdrop-blur-sm border border-white/10 rounded-2xl p-6">
@@ -827,39 +1034,38 @@ const HomePage = () => {
                 />
               </div>
               
-              <div className="space-y-3">
-                <div className="flex items-center gap-4 p-3 rounded-lg bg-slate-800/50 border border-white/5">
-                  <Avatar className="w-8 h-8 bg-blue-500">SC</Avatar>
-                  <div className="flex-1">
-                    <Typography variant="body2" className="text-white">
-                      <span className="font-semibold">Sarah Chen</span> just posted a new idea
-                    </Typography>
-                    <Typography variant="caption" className="text-gray-400">2 minutes ago</Typography>
+              <div className="space-y-3" data-activity-container>
+                {liveActivities.map((activity, index) => (
+                  <div
+                    key={activity.id}
+                    data-activity-index={index}
+                    className={`flex items-center gap-4 p-3 rounded-lg bg-slate-800/50 border border-white/5 transition-all duration-500 ease-out ${
+                      visibleActivities.has(index)
+                        ? 'opacity-100 transform translate-y-0'
+                        : 'opacity-0 transform translate-y-4'
+                    }`}
+                    style={{
+                      transitionDelay: `${index * 100}ms`
+                    }}
+                  >
+                    <Avatar className={`w-8 h-8 ${activity.avatarColor}`}>
+                      {activity.avatar}
+                    </Avatar>
+                    <div className="flex-1">
+                      <Typography variant="body2" className="text-white">
+                        <span className="font-semibold">{activity.name}</span> {activity.action}
+                      </Typography>
+                      <Typography variant="caption" className="text-gray-400">
+                        {activity.time}
+                      </Typography>
+                    </div>
+                    <Chip 
+                      label={activity.tag} 
+                      size="small" 
+                      className={activity.tagColor}
+                    />
                   </div>
-                  <Chip label="AI/ML" size="small" className="bg-purple-500/20 text-purple-300" />
-                </div>
-                
-                <div className="flex items-center gap-4 p-3 rounded-lg bg-slate-800/50 border border-white/5">
-                  <Avatar className="w-8 h-8 bg-green-500">MK</Avatar>
-                  <div className="flex-1">
-                    <Typography variant="body2" className="text-white">
-                      <span className="font-semibold">Mike Kumar</span> found a co-founder match
-                    </Typography>
-                    <Typography variant="caption" className="text-gray-400">5 minutes ago</Typography>
-                  </div>
-                  <Chip label="Fintech" size="small" className="bg-green-500/20 text-green-300" />
-                </div>
-                
-                <div className="flex items-center gap-4 p-3 rounded-lg bg-slate-800/50 border border-white/5">
-                  <Avatar className="w-8 h-8 bg-orange-500">EW</Avatar>
-                  <div className="flex-1">
-                    <Typography variant="body2" className="text-white">
-                      <span className="font-semibold">Emma Wilson</span> launched their startup
-                    </Typography>
-                    <Typography variant="caption" className="text-gray-400">12 minutes ago</Typography>
-                  </div>
-                  <Chip label="SaaS" size="small" className="bg-orange-500/20 text-orange-300" />
-                </div>
+                ))}
               </div>
             </div>
           </div>
@@ -1132,7 +1338,7 @@ const HomePage = () => {
                   <Code className="text-white w-6 h-6" />
                 </div>
                 <Typography variant="h5" className="text-white font-bold">
-                  CofounderConnect
+                FindYourCO
                 </Typography>
               </div>
               
@@ -1153,7 +1359,7 @@ const HomePage = () => {
               </div>
             </div>
 
-            {/* Navigation */}
+           
             <div>
               <Typography variant="subtitle1" className="text-white font-semibold mb-4">Product</Typography>
               <ul className="space-y-3">
@@ -1196,7 +1402,7 @@ const HomePage = () => {
           
           <div className="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
             <Typography variant="body2" className="text-gray-500">
-              © 2024 CofounderConnect Inc. All rights reserved.
+              © 2025 FindYourCO Inc. All rights reserved.
             </Typography>
             
             <div className="flex gap-6">

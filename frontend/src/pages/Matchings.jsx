@@ -116,32 +116,8 @@ const Matchings = () => {
     }
   ];
 
-  // Sort matches by percentage (highest first)
-  // If there's a latest post with required skills, boost matchPercentage for candidates who overlap
-  useEffect(() => {
-    try {
-      const posts = JSON.parse(localStorage.getItem('fyco_posts') || '[]');
-      if (posts && posts.length > 0) {
-        setRequiredSkills(posts[0].requiredSkills || []);
-      }
-    } catch (err) {
-      console.warn('Failed to read posts from localStorage', err);
-    }
-  }, []);
-
-  const computeMatchScore = (base, candidateSkills = []) => {
-    if (!requiredSkills || requiredSkills.length === 0) return base;
-    const lowerReq = requiredSkills.map(s => s.toLowerCase());
-    const lowerCandidate = candidateSkills.map(s => s.toLowerCase());
-    const overlap = lowerReq.filter(s => lowerCandidate.includes(s)).length;
-    // each overlapping skill adds 4% to the base, capped at +20
-    const bonus = Math.min(overlap * 4, 20);
-    return Math.min(100, base + bonus);
-  };
-
-  const sortedMatches = [...matches]
-    .map(m => ({ ...m, matchPercentage: computeMatchScore(m.matchPercentage, m.skills) }))
-    .sort((a, b) => b.matchPercentage - a.matchPercentage);
+ 
+  const sortedMatches = [...matches].sort((a, b) => b.matchPercentage - a.matchPercentage);
 
   const getMatchColor = (percentage) => {
     if (percentage >= 90) return 'text-green-400';
@@ -159,7 +135,7 @@ const Matchings = () => {
 
   return (
     <div className="w-full px-6 py-8">
-      {/* Header */}
+      
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -200,7 +176,7 @@ const Matchings = () => {
       </motion.div>
 
       <div className="flex gap-8">
-        {/* Sidebar Filters */}
+       
         <div className="w-64 space-y-6">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
