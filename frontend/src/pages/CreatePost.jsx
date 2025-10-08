@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../components/Layout.jsx';
+import { supabase } from '../lib/supabaseClient.js';
+import Toast from '../components/Toast.jsx';
 
 const CreatePost = () => {
   const navigate = useNavigate();
@@ -40,29 +42,66 @@ const CreatePost = () => {
     );
   };
 
-  const handleSubmit = () => {
-    console.log({
-      content: postContent,
-      tags: selectedTags,
-      fundingStage,
-      location,
-      requiredSkills,
-      createdAt: new Date().toISOString()
-    };
+  const handleSubmit = async() => {
+    // console.log({
+    //   content: postContent,
+    //   tags: selectedTags,
+    //   fundingStage,
+    //   location,
+    //   requiredSkills,
+    //   createdAt: new Date().toISOString()
+    // });
+
+    const { data: userData , error: userError } = await supabase.auth.getUser();
+    if (userError || !userData.user) {
+      console.error('User not authenticated', userError);
+      alert('You must be signed in to create a post.');
+      return;
+    }
+
+    const uid = userData.user.id;
+
+    if(!postContent.trim()) return;
+    
+
+    const requiredskills = extractSkillsFromPost(postContent,selectedTags);
+
+    const post = {
+    user_id : uid,
+    post_content: postContent,
+    tags: selectedTags,
+    funding_stage: [fundingStage], 
+    location,
+    // required_skills: requiredSkills,
+    created_at: new Date().toISOString()
+  };
+
 
     // Persist post locally so other pages (Matchings) can pick it up.
     try {
-      const key = 'fyco_posts';
-      const existing = JSON.parse(localStorage.getItem(key) || '[]');
-      existing.unshift(post);
-      localStorage.setItem(key, JSON.stringify(existing));
+      // const key = 'fyco_posts';
+      // const existing = JSON.parse(localStorage.getItem(key) || '[]');
+      // existing.unshift(post);
+      // localStorage.setItem(key, JSON.stringify(existing));
+      const { data, error } = await supabase.from('posts').insert([post])
+
+      if (error) {
+      console.error('Error inserting post:', error);
+      alert('Failed to publish post. Please try again.');
+      return;
+    }
+      // console.log('Post created:', data);
+      Toast.success("Post created successfully ..")
+
+
     } catch (err) {
-      console.error('Failed to save post to localStorage', err);
+      console.error('Error creating the post. Try again ..', err);
     }
 
     // Navigate back to dashboard and show a toast message
-    navigate('/dashboard', { state: { showToast: true, message: 'Post published — requirements extracted' } });
+    navigate('/dashboard', { state: { showToast: true, message: 'Post published — successfully' } });
   };
+
 
   // Very small keyword-based extractor. Keeps things client-side and simple.
   const extractSkillsFromPost = (text = '', tags = []) => {
@@ -143,6 +182,8 @@ const CreatePost = () => {
   };
 
   const charactersRemaining = 500 - postContent.length;
+
+  // const get
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">

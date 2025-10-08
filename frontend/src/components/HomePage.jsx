@@ -40,7 +40,10 @@ import {
   Security,
   Analytics
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { signUp, signIn, signOut } from '../lib/supabaseClient';
+import LoginModal from './LoginModal';
+import Toast from './Toast';
 
 
 function useAnimatedNumber(target, { duration = 1200, pause = 3000, loop = true } = {}) {
@@ -92,6 +95,17 @@ const HomePage = () => {
   const [visibleActivities, setVisibleActivities] = useState(new Set());
   const activityRefs = useRef([]);
 
+  // Authentication & UI state (login modal, toast, auth flag)
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    try {
+      return !!localStorage.getItem('fyco_isLoggedIn');
+    } catch (e) {
+      return false;
+    }
+  });
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [toast, setToast] = useState({ open: false, message: '', action: null, duration: 3000 });
+
   const coWord = 'Cofounders';
   const coLetters = Array.from(coWord.slice(1)); // 'ofounders'
   const [coIndex, setCoIndex] = useState(0);
@@ -125,6 +139,8 @@ const HomePage = () => {
           setToast({ open: true, message: 'Sign up failed: ' + error.message });
           return;
         }
+        // persist auth flag so other pages can reflect login status
+        try { localStorage.setItem('fyco_isLoggedIn', '1'); } catch (e) {}
         setIsLoggedIn(true);
         // navigate immediately and pass toast info to Dashboard to display
         navigate('/dashboard', { state: { showToast: true, message: 'Signed up successfully' } });
@@ -139,6 +155,7 @@ const HomePage = () => {
         setToast({ open: true, message: 'Sign in failed: ' + error.message });
         return;
       }
+      try { localStorage.setItem('fyco_isLoggedIn', '1'); } catch (e) {}
       setIsLoggedIn(true);
       // navigate immediately and pass toast info to Dashboard to display
       navigate('/dashboard', { state: { showToast: true, message: 'Signed in successfully' } });
@@ -154,6 +171,25 @@ const HomePage = () => {
   // show toast and navigate after the toast auto-closes
   setToast({ open: true, message: 'Logged out', action: 'navigateHome', duration: 3000 });
   };
+
+  // ensure local persisted flag is cleared on logout indicator
+  useEffect(() => {
+    if (!isLoggedIn) {
+      try { localStorage.removeItem('fyco_isLoggedIn'); } catch (e) {}
+    }
+  }, [isLoggedIn]);
+
+  // If navigated here with a toast in navigation state, show it once
+  const location = useLocation();
+  useEffect(() => {
+    const state = location.state || {};
+    if (state.showToast) {
+      setToast({ open: true, message: state.message || '', duration: state.duration || 3000 });
+      // clear state so it doesn't reappear on refresh/back
+      navigate(location.pathname, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Live activity data
   const liveActivities = [
