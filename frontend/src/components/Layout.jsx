@@ -11,6 +11,7 @@ import {
   Settings
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { signOut } from '../lib/supabaseClient';
 
 const ThemeContext = createContext();
 export const useTheme = () => useContext(ThemeContext);
@@ -22,9 +23,12 @@ const Layout = ({ children }) => {
   const [showSettings, setShowSettings] = useState(false);
   const settingsRef = useRef(null);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setShowSettings(false);
-    navigate('/');
+    try { await signOut(); } catch (e) { /* ignore */ }
+    try { localStorage.removeItem('fyco_isLoggedIn'); } catch (e) {}
+    // navigate home and pass a toast message via navigation state
+    navigate('/', { state: { showToast: true, message: 'Logged out' } });
   };
 
   const handleNavigate = (path) => {

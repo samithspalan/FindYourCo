@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import Toast from './Toast';
 import { motion } from 'framer-motion';
 import { 
   MessageCircle,
@@ -12,9 +14,23 @@ import {
 } from 'lucide-react';
 import { useTheme } from './Layout.jsx';
 import  Spline  from '@splinetool/react-spline';
+import { supabase } from '../lib/supabaseClient.js';
 const Dashboard = () => {
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState('for-you');
+
+  // navigation-state driven toast (e.g. after sign-in/signup)
+  const location = useLocation();
+  const navigate = useNavigate();
+  const navState = location.state || {};
+  const [toast, setToast] = useState({ open: !!navState.showToast, message: navState.message || '', duration: 3000 });
+
+  useEffect(() => {
+    if (navState.showToast) {
+      // clear the navigation state so toast doesn't reappear on refresh/back
+      navigate(location.pathname, { replace: true });
+    }
+  }, [navState, navigate, location.pathname]);
 
 
   const mockPosts = [
@@ -75,8 +91,21 @@ const Dashboard = () => {
     }
   ];
 
+  const getAllPosts = async () => {
+        const { data , error } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
+    
+  
+    if(error)
+      console.error('Error fetching posts:', error);
+  
+    console.log("The posts are : ",data);
+  
+  }
+
+  getAllPosts();
+
   return (
-    <div className="min-h-screen">
+  <div className="min-h-screen">
       <div className={`sticky top-0 z-30 ${theme.sidebarBg} backdrop-blur-xl ${theme.border} border-b`}>
      
         <div className="flex">
@@ -203,6 +232,13 @@ const Dashboard = () => {
       </motion.div>
         </div>
       </div>
+      {/* Render toast for navigation-driven messages */}
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        duration={toast.duration}
+        onClose={() => setToast({ open: false, message: '' })}
+      />
     </div>
   );
 };
