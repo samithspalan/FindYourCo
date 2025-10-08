@@ -337,7 +337,6 @@ const HomePage = () => {
     }
   ];
 
-  // Animated stats values (top-level hooks usage)
   const usersTarget = Math.floor(liveStats.users / 1000); // K
   const ideasTarget = Math.floor((liveStats.ideas / 1000) * 10) / 10; // K with 1 decimal
   const teamsTarget = liveStats.teams;
@@ -454,12 +453,12 @@ const HomePage = () => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          const activityIndex = parseInt(entry.target.getAttribute('data-activity-index'));
           if (entry.isIntersecting) {
-            // Add items one by one with a delay
-            setTimeout(() => {
-              setVisibleActivities(prev => new Set([...prev, activityIndex]));
-            }, activityIndex * 300); // 300ms delay between each item
+            liveActivities.forEach((_, index) => {
+              setTimeout(() => {
+                setVisibleActivities(prev => new Set([...prev, index]));
+              }, index * 200); 
+            });
           }
         });
       },
@@ -469,7 +468,7 @@ const HomePage = () => {
       }
     );
 
-    // Observe the container instead of individual items
+    // Observe the container
     const container = document.querySelector('[data-activity-container]');
     if (container) {
       observer.observe(container);
@@ -480,7 +479,7 @@ const HomePage = () => {
         observer.unobserve(container);
       }
     };
-  }, []);
+  }, [liveActivities]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -1046,69 +1045,8 @@ const HomePage = () => {
         </Container>
       </section>
 
-    
-      <section className="py-16 px-4">
-        <Container maxWidth="lg">
-          <div className="relative overflow-hidden">
-         
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-pink-500/5 animate-pulse"></div>
-            
-            <div className="relative backdrop-blur-sm border border-white/10 rounded-2xl p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></div>
-                    <div className="absolute inset-0 w-3 h-3 rounded-full bg-emerald-400 animate-ping opacity-40"></div>
-                  </div>
-                  <Typography variant="h6" className="text-white font-semibold">
-                    Live Activity
-                  </Typography>
-                </div>
-                <Chip 
-                  label={`${liveStats.users} online`} 
-                  className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
-                />
-              </div>
-              
-              <div className="space-y-3" data-activity-container>
-                {liveActivities.map((activity, index) => (
-                  <div
-                    key={activity.id}
-                    data-activity-index={index}
-                    className={`flex items-center gap-4 p-3 rounded-lg bg-slate-800/50 border border-white/5 transition-all duration-500 ease-out ${
-                      visibleActivities.has(index)
-                        ? 'opacity-100 transform translate-y-0'
-                        : 'opacity-0 transform translate-y-4'
-                    }`}
-                    style={{
-                      transitionDelay: `${index * 100}ms`
-                    }}
-                  >
-                    <Avatar className={`w-8 h-8 ${activity.avatarColor}`}>
-                      {activity.avatar}
-                    </Avatar>
-                    <div className="flex-1">
-                      <Typography variant="body2" className="text-white">
-                        <span className="font-semibold">{activity.name}</span> {activity.action}
-                      </Typography>
-                      <Typography variant="caption" className="text-gray-400">
-                        {activity.time}
-                      </Typography>
-                    </div>
-                    <Chip 
-                      label={activity.tag} 
-                      size="small" 
-                      className={activity.tagColor}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </Container>
-      </section>
 
-      {/* Interactive Dashboard Preview - No white backgrounds */}
+
       <section className="py-20 px-4">
         <Container maxWidth="xl">
           <div className="text-center mb-16">
@@ -1122,7 +1060,7 @@ const HomePage = () => {
           </div>
 
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Real-time Metrics */}
+         
             <div className="lg:col-span-1">
               <div className="space-y-6">
                 <div className="p-6 rounded-xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-white/10 backdrop-blur-sm">
