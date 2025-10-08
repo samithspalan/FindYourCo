@@ -111,7 +111,7 @@ const HomePage = () => {
     setTimeout(() => {
       setLoading(false);
       navigate('/dashboard');
-    }, 1500);
+    }, 500);
   };
 
   // Live activity data
@@ -371,7 +371,6 @@ const HomePage = () => {
     return () => clearInterval(interval);
   }, [testimonials.length]);
 
-  // Simple scroll animation for live activity items
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -391,7 +390,6 @@ const HomePage = () => {
       }
     );
 
-    // Observe the container
     const container = document.querySelector('[data-activity-container]');
     if (container) {
       observer.observe(container);
@@ -436,7 +434,7 @@ const HomePage = () => {
                 variant="contained"
                 startIcon={<GitHub />}
                 onClick={handleGitHubLogin}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-6"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-6 rounded-2xl"
               >
                 Login with GitHub
               </Button>
@@ -474,7 +472,6 @@ const HomePage = () => {
                 animation: 'fycoSweepGlow 3.2s ease-in-out infinite',
               }}
             />
-            {/* Secondary trailing glow */}
             <div
               className="pointer-events-none absolute  left-1/2 z-0"
               style={{
@@ -525,23 +522,15 @@ const HomePage = () => {
 
           </Typography>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16 rounded-2xl">
             <Button
               variant="contained"
               size="large"
               startIcon={<GitHub />}
               onClick={handleGitHubLogin}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-8 py-3 text-lg"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 rounded-2xl hover:to-purple-700 text-white font-semibold px-8 py-3 text-lg"
             >
               Get Started with GitHub
-            </Button>
-            <Button
-              variant="outlined"
-              size="large"
-              endIcon={<ArrowForward />}
-              className="text-white border-white/30 hover:border-white/50 px-8 py-3 text-lg"
-            >
-              Watch Demo
             </Button>
           </div>
 
