@@ -40,7 +40,10 @@ import {
   Security,
   Analytics
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { signUp, signIn, signOut } from '../lib/supabaseClient';
+import LoginModal from './LoginModal';
+import Toast from './Toast';
 
 
 function useAnimatedNumber(target, { duration = 1200, pause = 3000, loop = true } = {}) {
@@ -92,6 +95,17 @@ const HomePage = () => {
   const [visibleActivities, setVisibleActivities] = useState(new Set());
   const activityRefs = useRef([]);
 
+  // Authentication & UI state (login modal, toast, auth flag)
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    try {
+      return !!localStorage.getItem('fyco_isLoggedIn');
+    } catch (e) {
+      return false;
+    }
+  });
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [toast, setToast] = useState({ open: false, message: '', action: null, duration: 3000 });
+
   const coWord = 'Cofounders';
   const coLetters = Array.from(coWord.slice(1)); // 'ofounders'
   const [coIndex, setCoIndex] = useState(0);
@@ -106,13 +120,76 @@ const HomePage = () => {
     return () => clearTimeout(timer);
   }, [coIndex, coLetters.length]);
 
-  const handleGitHubLogin = () => {
+  const handleOpenLogin = () => setLoginOpen(true);
+
+  const handleLogin = async ({ email, password, mode }) => {
     setLoading(true);
-    setTimeout(() => {
+    // Simple client-side validation
+    if (!email || !password) {
+      setToast({ open: true, message: 'Please provide email and password' });
       setLoading(false);
-      navigate('/dashboard');
-    }, 1500);
+      return;
+    }
+    try {
+      if (mode === 'signup') {
+        const { data, error } = await signUp({ email, password });
+        setLoading(false);
+        setLoginOpen(false);
+        if (error) {
+          setToast({ open: true, message: 'Sign up failed: ' + error.message });
+          return;
+        }
+        // persist auth flag so other pages can reflect login status
+        try { localStorage.setItem('fyco_isLoggedIn', '1'); } catch (e) {}
+        setIsLoggedIn(true);
+        // navigate immediately and pass toast info to Dashboard to display
+        navigate('/dashboard', { state: { showToast: true, message: 'Signed up successfully' } });
+        return;
+      }
+
+      // signin
+      const { data, error } = await signIn({ email, password });
+      setLoading(false);
+      setLoginOpen(false);
+      if (error) {
+        setToast({ open: true, message: 'Sign in failed: ' + error.message });
+        return;
+      }
+      try { localStorage.setItem('fyco_isLoggedIn', '1'); } catch (e) {}
+      setIsLoggedIn(true);
+      // navigate immediately and pass toast info to Dashboard to display
+      navigate('/dashboard', { state: { showToast: true, message: 'Signed in successfully' } });
+    } catch (err) {
+      setLoading(false);
+      setToast({ open: true, message: 'Auth error' });
+    }
   };
+
+  const handleLogout = async () => {
+    await signOut();
+    setIsLoggedIn(false);
+  // show toast and navigate after the toast auto-closes
+  setToast({ open: true, message: 'Logged out', action: 'navigateHome', duration: 3000 });
+  };
+
+  // ensure local persisted flag is cleared on logout indicator
+  useEffect(() => {
+    if (!isLoggedIn) {
+      try { localStorage.removeItem('fyco_isLoggedIn'); } catch (e) {}
+    }
+  }, [isLoggedIn]);
+
+  // If navigated here with a toast in navigation state, show it once
+  const location = useLocation();
+  useEffect(() => {
+    const state = location.state || {};
+    if (state.showToast) {
+      setToast({ open: true, message: state.message || '', duration: state.duration || 3000 });
+      // clear state so it doesn't reappear on refresh/back
+      navigate(location.pathname, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Live activity data
   const liveActivities = [
@@ -432,14 +509,20 @@ const HomePage = () => {
               >
                 Features
               </Button>
-              <Button
-                variant="contained"
-                startIcon={<GitHub />}
-                onClick={handleGitHubLogin}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-6"
-              >
-                Login with GitHub
-              </Button>
+              {isLoggedIn ? (
+                <Button variant="contained" onClick={handleLogout} className="bg-red-600 text-white font-semibold px-6">
+                  Logout
+                </Button>
+              ) : (
+                <Button
+                  variant="contained"
+                  // startIcon={<GitHub />}
+                  onClick={handleOpenLogin}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-6"
+                >
+                  Login
+                </Button>
+              )}
             </div>
           </div>
         </Container>
@@ -526,15 +609,21 @@ const HomePage = () => {
           </Typography>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-            <Button
-              variant="contained"
-              size="large"
-              startIcon={<GitHub />}
-              onClick={handleGitHubLogin}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-8 py-3 text-lg"
-            >
-              Get Started with GitHub
-            </Button>
+            {isLoggedIn ? (
+              <Button variant="contained" size="large" onClick={handleLogout} className="bg-red-600 text-white font-semibold px-8 py-3 text-lg">
+                Logout
+              </Button>
+            ) : (
+              <Button
+                variant="contained"
+                size="large"
+                startIcon={<GitHub />}
+                onClick={handleOpenLogin}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-8 py-3 text-lg"
+              >
+                Get Started
+              </Button>
+            )}
             <Button
               variant="outlined"
               size="large"
@@ -559,6 +648,18 @@ const HomePage = () => {
           </div>
         </Container>
       </section>
+
+      <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} onLogin={handleLogin} loading={loading} />
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        duration={toast.duration ?? 3000}
+        onClose={() => {
+          const action = toast.action;
+          setToast({ open: false, message: '', action: null });
+          if (action === 'navigateHome') navigate('/');
+        }}
+      />
 
       <section className="py-20 px-4">
         <Container maxWidth="xl">
@@ -1155,7 +1256,7 @@ const HomePage = () => {
                 <Button
                   variant="contained"
                   size="large"
-                  onClick={handleGitHubLogin}
+                  onClick={handleOpenLogin}
                   disabled={loading}
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold px-12 py-4 text-lg relative overflow-hidden transition-all duration-300 transform group-hover:scale-105"
                   startIcon={loading ? null : <GitHub className="w-6 h-6" />}
