@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   MessageCircle,
@@ -11,6 +11,8 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useTheme } from './Layout.jsx';
+import Toast from './Toast';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
   const { theme } = useTheme();
@@ -76,6 +78,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen">
+      <DashboardToastHandler />
       {/* Twitter-like Header with Tabs */}
       <div className={`sticky top-0 z-30 ${theme.sidebarBg} backdrop-blur-xl ${theme.border} border-b`}>
         {/* Tab Navigation */}
@@ -215,3 +218,26 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+function DashboardToastHandler() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const state = location.state || {};
+  const [toast, setToast] = useState({ open: !!state.showToast, message: state.message || '', duration: 3000 });
+
+  useEffect(() => {
+    if (state.showToast) {
+      // clear the navigation state so toast doesn't reappear on refresh/back
+      navigate(location.pathname, { replace: true });
+    }
+  }, [state, navigate, location.pathname]);
+
+  return (
+    <Toast
+      open={toast.open}
+      message={toast.message}
+      duration={toast.duration}
+      onClose={() => setToast({ open: false, message: '' })}
+    />
+  );
+}

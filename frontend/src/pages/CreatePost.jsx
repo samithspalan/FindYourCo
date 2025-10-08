@@ -41,14 +41,109 @@ const CreatePost = () => {
   };
 
   const handleSubmit = () => {
-    // Handle post submission
-    console.log({
+    // Extract required skills from the post text and selected tags
+    const requiredSkills = extractSkillsFromPost(postContent, selectedTags);
+
+    const post = {
+      id: Date.now(),
       content: postContent,
       tags: selectedTags,
       fundingStage,
-      location
+      location,
+      requiredSkills,
+      createdAt: new Date().toISOString()
+    };
+
+    // Persist post locally so other pages (Matchings) can pick it up.
+    try {
+      const key = 'fyco_posts';
+      const existing = JSON.parse(localStorage.getItem(key) || '[]');
+      existing.unshift(post);
+      localStorage.setItem(key, JSON.stringify(existing));
+    } catch (err) {
+      console.error('Failed to save post to localStorage', err);
+    }
+
+    // Navigate back to dashboard and show a toast message
+    navigate('/dashboard', { state: { showToast: true, message: 'Post published — requirements extracted' } });
+  };
+
+  // Very small keyword-based extractor. Keeps things client-side and simple.
+  const extractSkillsFromPost = (text = '', tags = []) => {
+    const t = (text || '').toLowerCase();
+    const skills = new Set();
+
+    // Map some keywords / tags to skills
+    const keywordMap = {
+      react: ['React'],
+      node: ['Node.js'],
+      javascript: ['JavaScript'],
+      typescript: ['TypeScript'],
+      python: ['Python'],
+      django: ['Django'],
+      flask: ['Flask'],
+      aws: ['AWS'],
+      azure: ['Azure'],
+      gcp: ['GCP'],
+      docker: ['Docker'],
+      kubernetes: ['Kubernetes'],
+      ml: ['Machine Learning'],
+      ai: ['Machine Learning'],
+      'machine learning': ['Machine Learning'],
+      'data science': ['Data Science'],
+      solidity: ['Solidity'],
+      blockchain: ['Blockchain'],
+      'ui': ['UI Design'],
+      'ux': ['UX Design'],
+      design: ['UI/UX Design'],
+      product: ['Product Management'],
+      marketing: ['Marketing'],
+      growth: ['Growth Marketing'],
+      seo: ['SEO'],
+      sales: ['Sales'],
+      ios: ['iOS'],
+      android: ['Android'],
+      mobile: ['Mobile Development'],
+      'react native': ['React Native'],
+      postgres: ['PostgreSQL'],
+      mysql: ['MySQL'],
+      mongodb: ['MongoDB'],
+      'computer vision': ['Computer Vision']
+    };
+
+    // check keywords in text
+    Object.keys(keywordMap).forEach((kw) => {
+      if (t.includes(kw)) keywordMap[kw].forEach(s => skills.add(s));
     });
-    navigate('/dashboard');
+
+    // Also map selected industry tags to common skills
+    const tagMap = {
+      'AI/ML': ['Machine Learning', 'Python'],
+      'FinTech': ['Payments', 'Security'],
+      'HealthTech': ['Healthcare', 'Data Science'],
+      'SaaS': ['Product Management', 'Marketing'],
+      'E-commerce': ['Payments', 'Growth Marketing'],
+      'EdTech': ['Education', 'Product Management'],
+      'Blockchain': ['Blockchain', 'Solidity'],
+      'Mobile': ['Mobile Development'],
+      'Web3': ['Blockchain'],
+      'B2B': ['Sales', 'Business Development'],
+      'B2C': ['Growth Marketing', 'Product']
+    };
+
+    tags.forEach(tag => {
+      const mapped = tagMap[tag];
+      if (mapped) mapped.forEach(s => skills.add(s));
+    });
+
+    // Fallback: if no skills detected, suggest generic startup roles
+    if (skills.size === 0) {
+      skills.add('Product Management');
+      skills.add('Full-Stack Development');
+      skills.add('Design');
+    }
+
+    return Array.from(skills);
   };
 
   const charactersRemaining = 500 - postContent.length;

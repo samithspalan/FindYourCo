@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { 
   Users,
   MapPin,
@@ -19,7 +20,7 @@ import {
   Target,
   TrendingUp
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+// navigate not used in this file
 import { useTheme } from '../components/Layout.jsx';
 
 const Matchings = () => {
@@ -28,6 +29,9 @@ const Matchings = () => {
   
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [requiredSkills, setRequiredSkills] = useState([]);
+  const [selectedMatch, setSelectedMatch] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const filterOptions = [
     { id: 'all', label: 'All Matches', count: 24 },
@@ -113,7 +117,31 @@ const Matchings = () => {
   ];
 
   // Sort matches by percentage (highest first)
-  const sortedMatches = [...matches].sort((a, b) => b.matchPercentage - a.matchPercentage);
+  // If there's a latest post with required skills, boost matchPercentage for candidates who overlap
+  useEffect(() => {
+    try {
+      const posts = JSON.parse(localStorage.getItem('fyco_posts') || '[]');
+      if (posts && posts.length > 0) {
+        setRequiredSkills(posts[0].requiredSkills || []);
+      }
+    } catch (err) {
+      console.warn('Failed to read posts from localStorage', err);
+    }
+  }, []);
+
+  const computeMatchScore = (base, candidateSkills = []) => {
+    if (!requiredSkills || requiredSkills.length === 0) return base;
+    const lowerReq = requiredSkills.map(s => s.toLowerCase());
+    const lowerCandidate = candidateSkills.map(s => s.toLowerCase());
+    const overlap = lowerReq.filter(s => lowerCandidate.includes(s)).length;
+    // each overlapping skill adds 4% to the base, capped at +20
+    const bonus = Math.min(overlap * 4, 20);
+    return Math.min(100, base + bonus);
+  };
+
+  const sortedMatches = [...matches]
+    .map(m => ({ ...m, matchPercentage: computeMatchScore(m.matchPercentage, m.skills) }))
+    .sort((a, b) => b.matchPercentage - a.matchPercentage);
 
   const getMatchColor = (percentage) => {
     if (percentage >= 90) return 'text-green-400';
@@ -141,6 +169,16 @@ const Matchings = () => {
           <div>
             <h1 className={`text-3xl font-bold ${theme.text} mb-2`}>Co-Founder Matches</h1>
             <p className={theme.textSecondary}>Find your perfect co-founder match</p>
+            {requiredSkills && requiredSkills.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                <div className={`text-sm ${theme.textMuted} mr-2 self-center`}>Requirements:</div>
+                {requiredSkills.map((s, i) => (
+                  <span key={i} className="px-2 py-1 bg-blue-500/10 text-blue-400 rounded-full text-xs font-medium">
+                    {s}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
           
           <div className="flex items-center space-x-4">
@@ -231,6 +269,9 @@ const Matchings = () => {
                   y: -5,
                   transition: { duration: 0.2 }
                 }}
+                onClick={() => { setSelectedMatch(match); setIsModalOpen(true); }}
+                role="button"
+                tabIndex={0}
                 className={`${theme.cardBg} backdrop-blur-md ${theme.border} border rounded-2xl p-6 shadow-xl relative overflow-hidden cursor-pointer group`}
               >
                 {/* Match Badge */}
@@ -364,6 +405,56 @@ const Matchings = () => {
           </motion.div>
         </div>
       </div>
+      {/* Match Details Modal */}
+      {isModalOpen && selectedMatch && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setIsModalOpen(false)} />
+          <div className={`relative w-full max-w-2xl mx-auto p-6 rounded-2xl ${theme.cardBg} ${theme.border} border shadow-xl z-60`}> 
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center space-x-4">
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                  {selectedMatch.avatar}
+                </div>
+                <div>
+                  <h3 className={`text-xl font-bold ${theme.text}`}>{selectedMatch.name}</h3>
+                  <p className={`${theme.textSecondary}`}>{selectedMatch.role}</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className={`text-sm ${theme.textMuted}`}>{selectedMatch.location}</div>
+                <button onClick={() => setIsModalOpen(false)} className={`px-3 py-2 rounded-lg ${theme.hover} ${theme.textMuted}`}>Close</button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h4 className={`text-sm font-medium ${theme.textMuted} mb-2`}>Technical Skills</h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedMatch.skills.map((s, idx) => {
+                    const isMatch = (requiredSkills || []).map(x => x.toLowerCase()).includes(s.toLowerCase());
+                    return (
+                      <span key={idx} className={`px-3 py-1 rounded-full text-xs font-medium ${isMatch ? 'bg-green-500/20 text-green-300' : 'bg-blue-500/10 text-blue-400'}`}>
+                        {s}{isMatch ? ' ✓' : ''}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <h4 className={`text-sm font-medium ${theme.textMuted} mb-2`}>Profile Details</h4>
+                <div className={`text-sm ${theme.textSecondary} space-y-2`}>
+                  <div><strong>Experience:</strong> {selectedMatch.experience}</div>
+                  <div><strong>Education:</strong> {selectedMatch.education}</div>
+                  <div><strong>Previous Companies:</strong> {selectedMatch.previousCompanies.join(', ')}</div>
+                  <div><strong>Interests:</strong> {selectedMatch.interests.join(', ')}</div>
+                  <div className="pt-2"><strong>Bio:</strong> <div className={`${theme.textSecondary} text-sm`}>{selectedMatch.bio}</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
