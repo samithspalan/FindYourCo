@@ -11,7 +11,7 @@ import {
   Settings
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { signOut } from '../lib/supabaseClient';
+import { signOut, supabase } from '../lib/supabaseClient';
 
 const ThemeContext = createContext();
 export const useTheme = () => useContext(ThemeContext);
@@ -21,6 +21,7 @@ const Layout = ({ children }) => {
   const location = useLocation();
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const settingsRef = useRef(null);
 
   const handleLogout = async () => {
@@ -48,6 +49,45 @@ const Layout = ({ children }) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Get current user on component mount
+  useEffect(() => {
+    getCurrentUser();
+  }, []);
+
+  const getCurrentUser = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+    } catch (error) {
+      console.error('Error getting user:', error);
+    }
+  };
+
+  // Helper function to get display name from email
+  const getDisplayName = () => {
+    if (currentUser && currentUser.email) {
+      return currentUser.email.split('@')[0];
+    }
+    return 'Your Name';
+  };
+
+  // Helper function to get handle from email  
+  const getHandle = () => {
+    if (currentUser && currentUser.email) {
+      return `@${currentUser.email.split('@')[0]}`;
+    }
+    return '@yourhandle';
+  };
+
+  // Helper function to generate avatar from email
+  const generateUserAvatar = () => {
+    if (currentUser && currentUser.email) {
+      const username = currentUser.email.split('@')[0];
+      return username.substring(0, 2).toUpperCase();
+    }
+    return 'YO';
+  };
 
   const navigationItems = [
     { id: 'dashboard', label: 'Posts', icon: <Home className="w-6 h-6" />, path: '/dashboard' },
@@ -111,11 +151,11 @@ const Layout = ({ children }) => {
           <div className={`mt-8 pt-6 ${theme.border} border-t`}>
             <div className={`flex items-center space-x-3 p-3 rounded-xl ${theme.cardBg} backdrop-blur-md mb-3`}>
               <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
-                YO
+                {generateUserAvatar()}
               </div>
               <div>
-                <div className={`${theme.text} font-medium`}>Your Name</div>
-                <div className={`${theme.textMuted} text-sm`}>@yourhandle</div>
+                <div className={`${theme.text} font-medium`}>{getDisplayName()}</div>
+                <div className={`${theme.textMuted} text-sm`}>{getHandle()}</div>
               </div>
             </div>
             

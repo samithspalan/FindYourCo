@@ -1309,7 +1309,7 @@ const HomePage = () => {
                   <Code className="text-white w-6 h-6" />
                 </div>
                 <Typography variant="h5" className="text-white font-bold">
-                FindYourCO
+                Aarambh
                 </Typography>
               </div>
               
@@ -1373,7 +1373,7 @@ const HomePage = () => {
           
           <div className="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
             <Typography variant="body2" className="text-gray-500">
-              © 2025 FindYourCO Inc. All rights reserved.
+              &copy; 2025 Team Aarambh. All rights reserved.
             </Typography>
             
             <div className="flex gap-6">

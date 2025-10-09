@@ -14,10 +14,13 @@ import {
 } from 'lucide-react';
 import { useTheme } from './Layout.jsx';
 import  Spline  from '@splinetool/react-spline';
-import { supabase } from '../lib/supabaseClient.js';
+import { supabase, getPosts, testSupabaseConnection } from '../lib/supabaseClient.js';
 const Dashboard = () => {
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState('for-you');
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
 
   // navigation-state driven toast (e.g. after sign-in/signup)
   const location = useLocation();
@@ -33,48 +36,7 @@ const Dashboard = () => {
   }, [navState, navigate, location.pathname]);
 
 
-  const mockPosts = [
-    {
-      id: 1,
-      author: { name: 'Sarah Chen', handle: '@sarah_chen', avatar: 'SC', verified: true },
-      time: '2h',
-      content: 'Seeking a technical co-founder for my AI-powered productivity platform. We\'ve validated product-market fit with 10K+ users and $50K ARR. Looking for someone with React/Node.js expertise and startup experience.',
-      likes: 127,
-      reposts: 34,
-      replies: 18,
-      tags: ['AI', 'Productivity', 'B2B SaaS']
-    },
-    {
-      id: 2,
-      author: { name: 'Marcus Rodriguez', handle: '@marcus_dev', avatar: 'MR', verified: false },
-      time: '4h',
-      content: 'Building the next generation of remote collaboration tools. Currently at $25K MRR with strong growth. Looking for a business co-founder with marketing and sales experience to scale to $1M ARR.',
-      likes: 89,
-      reposts: 12,
-      replies: 23,
-      tags: ['Remote Work', 'SaaS', 'Collaboration']
-    },
-    {
-      id: 3,
-      author: { name: 'Elena Park', handle: '@elena_design', avatar: 'EP', verified: true },
-      time: '6h',
-      content: 'Healthcare tech entrepreneur seeking CTO co-founder. We\'re revolutionizing patient care with AI diagnostics. Already have pilot partnerships with 3 hospitals and $2M in pre-seed funding.',
-      likes: 203,
-      reposts: 45,
-      replies: 31,
-      tags: ['HealthTech', 'AI', 'Diagnostics']
-    },
-    {
-      id: 4,
-      author: { name: 'David Kim', handle: '@david_fintech', avatar: 'DK', verified: false },
-      time: '8h',
-      content: 'FinTech startup focused on crypto payment solutions for SMBs. Looking for a technical co-founder with blockchain and payment processing experience. We have LOIs from 50+ merchants.',
-      likes: 156,
-      reposts: 28,
-      replies: 19,
-      tags: ['FinTech', 'Crypto', 'Payments']
-    }
-  ];
+  // Removed mockPosts - using real data from Supabase
 
   const tabs = [
     {
@@ -91,18 +53,97 @@ const Dashboard = () => {
     }
   ];
 
-  const getAllPosts = async () => {
-        const { data , error } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
-    
-  
-    if(error)
-      console.error('Error fetching posts:', error);
-  
-    console.log("The posts are : ",data);
-  
-  }
+  // Load posts and user when component mounts
+  useEffect(() => {
+    loadPosts();
+    getCurrentUser();
+  }, []);
 
-  getAllPosts();
+  const getCurrentUser = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+      console.log('Current user:', user);
+    } catch (error) {
+      console.error('Error getting user:', error);
+    }
+  };
+
+  // Track posts state changes
+  useEffect(() => {
+    console.log("Posts state changed:", posts);
+  }, [posts]);
+
+  const loadPosts = async () => {
+    try {
+      console.log('Starting to fetch posts...');
+      const { data, error } = await getPosts();
+      console.log('Raw response from getPosts:', { data, error });
+      
+      if (error) {
+        console.error('Error fetching posts:', error);
+        alert(`Error fetching posts: ${error.message}`);
+      } else {
+        console.log("Number of posts fetched:", data?.length || 0);
+        console.log("The posts are: ", data);
+        setPosts(data || []);
+        console.log("Posts state after setting:", data || []);
+      }
+    } catch (err) {
+      console.error('Error loading posts:', err);
+      alert(`Catch error: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Helper function to format time ago
+  const formatTimeAgo = (timestamp) => {
+    const now = new Date();
+    const postTime = new Date(timestamp);
+    const diffInMinutes = Math.floor((now - postTime) / (1000 * 60));
+    
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes}m`;
+    } else if (diffInMinutes < 1440) {
+      return `${Math.floor(diffInMinutes / 60)}h`;
+    } else {
+      return `${Math.floor(diffInMinutes / 1440)}d`;
+    }
+  };
+
+  const generateAvatar = (userId) => {
+    
+    if (currentUser && userId === currentUser.id && currentUser.email) {
+      const username = currentUser.email.split('@')[0];
+      return username.substring(0, 2).toUpperCase();
+    }
+    return userId.substring(0, 2).toUpperCase();
+  };
+
+  const getDisplayName = (userId) => {
+    if (currentUser && userId === currentUser.id && currentUser.email) {
+      return currentUser.email.split('@')[0];
+    }
+    return 'Anonymous User';
+  };
+
+  const getHandle = (userId) => {
+    if (currentUser && userId === currentUser.id && currentUser.email) {
+      return `@${currentUser.email.split('@')[0]}`;
+    }
+    return `@user_${userId.substring(0, 8)}`;
+  };
+
+  const handleTestConnection = async () => {
+    console.log('Testing Supabase connection...');
+    const result = await testSupabaseConnection();
+    console.log('Test result:', result);
+    
+    console.log('Testing getPosts...');
+    const postsResult = await getPosts();
+    console.log('Posts result:', postsResult);
+  };
 
   return (
   <div className="min-h-screen">
@@ -139,100 +180,122 @@ const Dashboard = () => {
 
       <div className="max-w-2xl mx-auto">
         <div className="divide-y divide-gray-700/20">
-          {activeTab === 'for-you' && mockPosts.map((post, index) => (
-            <motion.article
-              key={post.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className={`px-4 py-4 ${theme.hover} transition-colors cursor-pointer border-b ${theme.border}/20`}
-            >
-            
-              <div className="flex space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
-                  {post.author.avatar}
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-1 mb-1">
-                    <h3 className={`font-bold ${theme.text} truncate`}>{post.author.name}</h3>
-                    {post.author.verified && (
-                      <CheckCircle className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                    )}
-                    <span className={`${theme.textMuted} text-sm`}>{post.author.handle}</span>
-                    <span className={`${theme.textMuted} text-sm`}>·</span>
-                    <span className={`${theme.textMuted} text-sm`}>{post.time}</span>
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+          ) : posts.length === 0 ? (
+            <div className="text-center py-12">
+              <p className={`${theme.textMuted} text-lg`}>No posts yet</p>
+              <p className={`${theme.textMuted} text-sm mt-2`}>Be the first to share your startup idea!</p>
+            </div>
+          ) : activeTab === 'for-you' ? (
+            posts.map((post, index) => (
+              <motion.article
+                key={post.post_id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className={`px-4 py-4 ${theme.hover} transition-colors cursor-pointer`}
+              >
+                <div className="flex space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+                    {generateAvatar(post.user_id)}
                   </div>
                   
-                  <div className="mb-3">
-                    <p className={`${theme.textSecondary} leading-relaxed`}>{post.content}</p>
-                  </div>
-                  {post.tags && (
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {post.tags.map((tag, tagIndex) => (
-                        <span
-                          key={tagIndex}
-                          className="px-2 py-1 bg-blue-500/10 text-blue-500 rounded-full text-xs font-medium"
-                        >
-                          #{tag}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-1 mb-1">
+                      <h3 className={`font-bold ${theme.text} truncate`}>{getDisplayName(post.user_id)}</h3>
+                      <span className={`${theme.textMuted} text-sm`}>{getHandle(post.user_id)}</span>
+                      <span className={`${theme.textMuted} text-sm`}>·</span>
+                      <span className={`${theme.textMuted} text-sm`}>{formatTimeAgo(post.created_at)}</span>
+                    </div>
+                    
+                    <div className="mb-3">
+                      <p className={`${theme.textSecondary} leading-relaxed`}>{post.post_content}</p>
+                    </div>
+                    
+                    {post.tags && post.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {post.tags.map((tag, tagIndex) => (
+                          <span
+                            key={tagIndex}
+                            className="px-2 py-1 bg-blue-500/10 text-blue-500 rounded-full text-xs font-medium"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {post.location && (
+                      <div className="mb-3">
+                        <span className="px-2 py-1 bg-purple-500/10 text-purple-500 rounded-full text-xs font-medium">
+                          📍 {post.location}
                         </span>
-                    ))}
-                  </div>
-                )}
-                  <div className="flex items-center justify-between max-w-md mt-3">
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      className={`flex items-center space-x-1 ${theme.textMuted} hover:text-blue-400 transition-colors`}
-                    >
-                      <MessageCircle className="w-4 h-4" />
-                      <span className="text-sm">{post.replies}</span>
-                    </motion.button>
+                      </div>
+                    )}
                     
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      className={`flex items-center space-x-1 ${theme.textMuted} hover:text-green-400 transition-colors`}
-                    >
-                      <Repeat2 className="w-4 h-4" />
-                      <span className="text-sm">{post.reposts}</span>
-                    </motion.button>
-                    
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      className={`flex items-center space-x-1 ${theme.textMuted} hover:text-red-400 transition-colors`}
-                    >
-                      <Heart className="w-4 h-4" />
-                      <span className="text-sm">{post.likes}</span>
-                    </motion.button>
-                    
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      className={`${theme.textMuted} hover:text-blue-400 transition-colors`}
-                    >
-                      <Share2 className="w-4 h-4" />
-                    </motion.button>
+                    <div className="flex items-center justify-between max-w-md mt-3">
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        className={`flex items-center space-x-1 ${theme.textMuted} hover:text-blue-400 transition-colors`}
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                        <span className="text-sm">0</span>
+                      </motion.button>
+                      
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        className={`flex items-center space-x-1 ${theme.textMuted} hover:text-green-400 transition-colors`}
+                      >
+                        <Repeat2 className="w-4 h-4" />
+                        <span className="text-sm">0</span>
+                      </motion.button>
+                      
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        className={`flex items-center space-x-1 ${theme.textMuted} hover:text-red-400 transition-colors`}
+                      >
+                        <Heart className="w-4 h-4" />
+                        <span className="text-sm">0</span>
+                      </motion.button>
+                      
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        className={`${theme.textMuted} hover:text-blue-400 transition-colors`}
+                      >
+                        <Share2 className="w-4 h-4" />
+                      </motion.button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.article>
-            ))}
+              </motion.article>
+            ))
+          ) : (
+            <div className="text-center py-12">
+              <p className={`${theme.textMuted} text-lg`}>Following tab - Coming soon</p>
+            </div>
+          )}
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        className="text-center py-8"
-      >
-        <button className={`${theme.cardBg} backdrop-blur-md ${theme.border} border px-8 py-3 rounded-lg ${theme.textSecondary} hover:${theme.text} transition-all`}>
-          Load More Posts
-        </button>
-      </motion.div>
+          {posts.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="text-center py-8"
+            >
+              <button className={`${theme.cardBg} backdrop-blur-md ${theme.border} border px-8 py-3 rounded-lg ${theme.textSecondary} hover:${theme.text} transition-all`}>
+                Load More Posts
+              </button>
+            </motion.div>
+          )}
         </div>
       </div>
-      {/* Render toast for navigation-driven messages */}
       <Toast
         open={toast.open}
         message={toast.message}
