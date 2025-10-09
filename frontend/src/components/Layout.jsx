@@ -1,5 +1,5 @@
 import React, { useState, createContext, useContext, useEffect, useRef } from 'react';
-import {motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Home,
   Plus,
@@ -28,7 +28,7 @@ const Layout = ({ children }) => {
   const handleLogout = async () => {
     setShowSettings(false);
     try { await signOut(); } catch (error) { console.log(error) }
-    try { localStorage.removeItem('fyco_isLoggedIn'); } catch (error) { console.log(error)}
+    try { localStorage.removeItem('fyco_isLoggedIn'); } catch (error) { console.log(error) }
     // navigate home and pass a toast message via navigation state
     navigate('/', { state: { showToast: true, message: 'Logged out' } });
   };
@@ -172,31 +172,21 @@ const Layout = ({ children }) => {
           </div>
           <div className={`mt-8 pt-6 ${theme.border} border-t`}>
             <div className={`flex items-center space-x-3 p-3 rounded-xl ${theme.cardBg} backdrop-blur-md mb-3`}>
-              <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
-                {UserInfo.avatar_url ? (
-                  <img
-                    src={UserInfo.avatar_url}
-                    alt={UserInfo.fullName}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-blue-500 text-white font-semibold">
-                    {UserInfo.fullName ? UserInfo.fullName[0].toUpperCase() : 'U'}
-                  </div>
-                )}
-              </div>
-              <div>
-                <div className={`${theme.text} font-medium`}>{UserInfo.fullName || ''}</div>
-                <div className={`${theme.textMuted} text-sm`}>{UserInfo.email || ''}</div>
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
-                {generateUserAvatar()}
-              </div>
-              <div>
-                <div className={`${theme.text} font-medium`}>{getDisplayName()}</div>
-                <div className={`${theme.textMuted} text-sm`}>{getHandle()}</div>
-              </div>
-            </div>
+              <div className="flex items-center space-x-4">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                  {generateUserAvatar()}
+                </div>
 
+                <div className="flex flex-col">
+                  <div className={`${theme.text} font-medium`}>{UserInfo.fullName || ''}</div>
+                  <div className={`${theme.textMuted} text-sm`}>{UserInfo.email || ''}</div>
+                  <div className="mt-2">
+                    <div className={`${theme.text} font-medium`}>{getDisplayName()}</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
 
             <div className="relative" ref={settingsRef}>
               <button

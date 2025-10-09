@@ -212,41 +212,50 @@ const HomePage = () => {
     }
   }
 
-  useEffect(() => {
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+useEffect(() => {
+  const { data: listener } = supabase.auth.onAuthStateChange(
+    (_event, session) => {
       const user = session?.user;
-
       if (!user) return;
 
- (async () => {
-      try {
-        await UpsertUser({
-          id: user.id,
-          email: user.email,
-          full_name: user.user_metadata?.full_name || '',
-          first_name: user.user_metadata?.given_name || '',
-          last_name: user.user_metadata?.family_name || '',
-          avatar_url: user.user_metadata?.avatar_url || '',
-          provider: user.app_metadata?.provider || 'google',
-          locale: user.user_metadata?.locale || '',
-          created_at: user.created_at,
-          last_sign_in_at: user.last_sign_in_at
-        });
+      // Only redirect if user is not already on a protected page
+      if (window.location.pathname === '/' || window.location.pathname === '/login') {
+        (async () => {
+          try {
+            await UpsertUser({
+              id: user.id,
+              email: user.email,
+              full_name: user.user_metadata?.full_name || '',
+              first_name: user.user_metadata?.given_name || '',
+              last_name: user.user_metadata?.family_name || '',
+              avatar_url: user.user_metadata?.avatar_url || '',
+              provider: user.app_metadata?.provider || 'google',
+              locale: user.user_metadata?.locale || '',
+              created_at: user.created_at,
+              last_sign_in_at: user.last_sign_in_at
+            });
 
-        localStorage.setItem('fyco_isLoggedIn', '1');
-        setIsLoggedIn(true);
-        setToast({ open: true, message: 'Logged in successfully with Google' });
-        navigate('/dashboard');
-      } catch (e) {
-        console.error('Error upserting Google user:', e);
-      } finally {
-        setLoading(false);
+            localStorage.setItem('fyco_isLoggedIn', '1');
+            setIsLoggedIn(true);
+            setToast({ open: true, message: 'Logged in successfully with Google' });
+
+            // Redirect only if currently on root/login
+            navigate('/dashboard');
+          } catch (e) {
+            console.error('Error upserting Google user:', e);
+          } finally {
+            setLoading(false);
+          }
+        })();
       }
-    })();
-  });
+    }
+  );
 
-  return () => listener.subscription.unsubscribe();
-}, [navigate, setIsLoggedIn]);
+  return () => {
+    listener?.subscription.unsubscribe();
+  };
+}, []);
+
 
 
 
@@ -564,6 +573,7 @@ const HomePage = () => {
   }, [liveActivities]);
 
   return (
+    <>
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
 
       <nav className="fixed top-0 w-full z-50 backdrop-blur-md bg-black/20 border-b border-white/10">
@@ -624,14 +634,8 @@ const HomePage = () => {
           <div className="mb-8">
             <Chip
               label="✨ Now in Beta"
-              className="bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-white/20 mb-1 -mt-10"
-            </div>
-            <div className="mb-8">
-              <Chip 
-                label="✨ Now in Beta" 
-                className="bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-white/20 mb-1 -mt-10"
-              />
-            </div>
+              className="bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-white/20 mb-1 -mt-10"/>
+            < div/>
             <div
               className="pointer-events-none absolute  left-1/2 z-0"
               style={{
@@ -1508,6 +1512,7 @@ const HomePage = () => {
         </Container>
       </footer>
     </div>
+    </>
   );
 };
 

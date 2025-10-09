@@ -54,9 +54,17 @@ export async function getPosts() {
   try {
     const { data, error } = await supabase
       .from('posts')
-      .select('*')
+      .select(`
+        *,
+        user:users!posts_user_id_fkey (
+          id,
+          full_name,
+          email,
+          avatar_url
+        )
+      `)
       .order('created_at', { ascending: false });
-    
+
     console.log('Supabase response:', { data, error });
     return { data, error };
   } catch (err) {
@@ -64,6 +72,8 @@ export async function getPosts() {
     return { data: null, error: err };
   }
 }
+
+
 
 // Test function to check Supabase connection
 export async function testSupabaseConnection() {
