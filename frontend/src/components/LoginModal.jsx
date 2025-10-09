@@ -1,6 +1,18 @@
 import React, { useState } from 'react';
-import { Modal, Box, Typography, TextField, Button, IconButton, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import {
+  Modal,
+  Box,
+  Typography,
+  TextField,
+  Button,
+  IconButton,
+  ToggleButton,
+  ToggleButtonGroup,
+  Divider,
+} from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import { signInWithGoogle } from '../lib/supabaseClient';
+import { FcGoogle } from 'react-icons/fc';
 
 const style = {
   position: 'absolute',
@@ -28,9 +40,17 @@ export default function LoginModal({ open, onClose, onLogin, loading }) {
     onLogin({ email, password, mode });
   };
 
+  const handleGoogleLogin = async () => {
+    const { error } = await signInWithGoogle();
+    if (error) {
+      alert(`Error logging in with Google: ${error.message}`);
+    }
+  };
+
   return (
     <Modal open={open} onClose={onClose}>
       <Box sx={style}>
+        {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <Typography variant="h6">Login</Typography>
           <IconButton onClick={onClose} size="small">
@@ -72,10 +92,25 @@ export default function LoginModal({ open, onClose, onLogin, loading }) {
 
           <div className="flex justify-end mt-4">
             <Button type="submit" variant="contained" disabled={loading}>
-              {loading ? 'Logging in...' : 'Login'}
+              {loading
+                ? 'Please wait...'
+                : mode === 'signin'
+                ? 'Login'
+                : 'Sign Up'}
             </Button>
           </div>
         </form>
+
+        <Divider sx={{ my: 3 }}>or</Divider>
+
+        <Button
+          fullWidth
+          variant="outlined"
+          startIcon={<FcGoogle />}
+          onClick={handleGoogleLogin}
+        >
+          Continue with Google
+        </Button>
       </Box>
     </Modal>
   );

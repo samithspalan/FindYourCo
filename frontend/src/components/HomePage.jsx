@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
-import { 
-  Button, 
-  Container, 
-  Typography, 
-  Box, 
-  Card, 
+import { useState, useEffect } from 'react';
+import {
+  Button,
+  Container,
+  Typography,
+  Box,
+  Card,
   CardContent,
   Grid,
   Chip,
@@ -41,9 +41,10 @@ import {
   Analytics
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { signUp, signIn, signOut } from '../lib/supabaseClient';
+import { signUp, signIn, signOut, signInWithGoogle } from '../lib/supabaseClient';
 import LoginModal from './LoginModal';
 import Toast from './Toast';
+import { supabase, UpsertUser } from '../lib/supabaseClient';
 
 
 function useAnimatedNumber(target, { duration = 1200, pause = 3000, loop = true } = {}) {
@@ -88,18 +89,19 @@ const HomePage = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [liveStats, setLiveStats] = useState({ users: 10000, ideas: 2500, teams: 500, startups: 150 });
-  const [email, setEmail] = useState('');
+  // const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [subscribed, setSubscribed] = useState(false);
-  const [showProgress, setShowProgress] = useState(false);
+  // const [subscribed, setSubscribed] = useState(false);
+  // const [showProgress, setShowProgress] = useState(false);
   const [visibleActivities, setVisibleActivities] = useState(new Set());
-  const activityRefs = useRef([]);
+  // const activityRefs = useRef([]);
 
   // Authentication & UI state (login modal, toast, auth flag)
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     try {
       return !!localStorage.getItem('fyco_isLoggedIn');
-    } catch (e) {
+    } catch (error) {
+      console.log("Error is : ",error)
       return false;
     }
   });
@@ -124,58 +126,140 @@ const HomePage = () => {
 
   const handleLogin = async ({ email, password, mode }) => {
     setLoading(true);
-    // Simple client-side validation
+
     if (!email || !password) {
       setToast({ open: true, message: 'Please provide email and password' });
       setLoading(false);
       return;
     }
+
     try {
+      let result;
+
       if (mode === 'signup') {
-        const { data, error } = await signUp({ email, password });
+        result = await signUp({ email, password });
+      } else {
+        result = await signIn({ email, password });
+      }
+      console.log("Result is : ", result);
+      const { data, error } = await supabase.auth.getUser();
+      const user = data?.user;
+
+      if(error)
+        return;
+
+      if (!user) {
+        setToast({ open: true, message: 'Auth failed: no user returned' });
         setLoading(false);
-        setLoginOpen(false);
-        if (error) {
-          setToast({ open: true, message: 'Sign up failed: ' + error.message });
-          return;
-        }
-        // persist auth flag so other pages can reflect login status
-        try { localStorage.setItem('fyco_isLoggedIn', '1'); } catch (e) {}
-        setIsLoggedIn(true);
-        // navigate immediately and pass toast info to Dashboard to display
-        navigate('/dashboard', { state: { showToast: true, message: 'Signed up successfully' } });
         return;
       }
 
-      // signin
-      const { data, error } = await signIn({ email, password });
+      const { error: upsertError } = await UpsertUser({
+        id: user.id,
+        email: user.email,
+        full_name: user.user_metadata?.full_name || '',
+        first_name: user.user_metadata?.given_name || '',
+        last_name: user.user_metadata?.family_name || '',
+        avatar_url: user.user_metadata?.avatar_url || '',
+        provider: 'email',
+        locale: user.user_metadata?.locale || '',
+        created_at: user.created_at,
+        last_sign_in_at: user.last_sign_in_at
+      });
+
+      if (upsertError) console.error('Error upserting user:', upsertError);
+
+      // Persist login flag
+      try { 
+        localStorage.setItem('fyco_isLoggedIn', '1'); 
+      } catch (error) 
+      { 
+        console.log("Error is : ",error)
+      }
+
+      setIsLoggedIn(true);
       setLoading(false);
       setLoginOpen(false);
-      if (error) {
-        setToast({ open: true, message: 'Sign in failed: ' + error.message });
-        return;
-      }
-      try { localStorage.setItem('fyco_isLoggedIn', '1'); } catch (e) {}
-      setIsLoggedIn(true);
-      // navigate immediately and pass toast info to Dashboard to display
-      navigate('/dashboard', { state: { showToast: true, message: 'Signed in successfully' } });
+
+      navigate('/dashboard', {
+        state: { showToast: true, message: mode === 'signup' ? 'Signed up successfully' : 'Signed in successfully' }
+      });
+
     } catch (err) {
       setLoading(false);
       setToast({ open: true, message: 'Auth error' });
+      console.error(err);
     }
   };
+
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    try {
+      const { error } = await signInWithGoogle({
+        options: { redirectTo: window.location.origin }
+      });
+
+      if (error) {
+        setToast({ open: true, message: 'Google login failed: ' + error.message });
+        setLoading(false);
+        return;
+      }
+
+    } catch (error) {
+      setToast({ open: true, message: "Error logging in with Google ..", error });
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      const user = session?.user;
+
+      if (!user) return;
+
+ (async () => {
+      try {
+        await UpsertUser({
+          id: user.id,
+          email: user.email,
+          full_name: user.user_metadata?.full_name || '',
+          first_name: user.user_metadata?.given_name || '',
+          last_name: user.user_metadata?.family_name || '',
+          avatar_url: user.user_metadata?.avatar_url || '',
+          provider: user.app_metadata?.provider || 'google',
+          locale: user.user_metadata?.locale || '',
+          created_at: user.created_at,
+          last_sign_in_at: user.last_sign_in_at
+        });
+
+        localStorage.setItem('fyco_isLoggedIn', '1');
+        setIsLoggedIn(true);
+        setToast({ open: true, message: 'Logged in successfully with Google' });
+        navigate('/dashboard');
+      } catch (e) {
+        console.error('Error upserting Google user:', e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  });
+
+  return () => listener.subscription.unsubscribe();
+}, [navigate, setIsLoggedIn]);
+
+
 
   const handleLogout = async () => {
     await signOut();
     setIsLoggedIn(false);
-  // show toast and navigate after the toast auto-closes
-  setToast({ open: true, message: 'Logged out', action: 'navigateHome', duration: 3000 });
+    setToast({ open: true, message: 'Logged out', action: 'navigateHome', duration: 3000 });
   };
 
   // ensure local persisted flag is cleared on logout indicator
   useEffect(() => {
     if (!isLoggedIn) {
-      try { localStorage.removeItem('fyco_isLoggedIn'); } catch (e) {}
+      try { localStorage.removeItem('fyco_isLoggedIn'); } catch (error) { console.log(error)}
     }
   }, [isLoggedIn]);
 
@@ -255,16 +339,16 @@ const HomePage = () => {
     }
   ];
 
-  const handleSubscribe = async () => {
-    if (!email) return;
-    setLoading(true);
-    setShowProgress(true);
-    setTimeout(() => {
-      setLoading(false);
-      setSubscribed(true);
-      setShowProgress(false);
-    }, 2000);
-  };
+  // const handleSubscribe = async () => {
+  //   if (!email) return;
+  //   setLoading(true);
+  //   setShowProgress(true);
+  //   setTimeout(() => {
+  //     setLoading(false);
+  //     setSubscribed(true);
+  //     setShowProgress(false);
+  //   }, 2000);
+  // };
 
   const features = [
     {
@@ -355,8 +439,8 @@ const HomePage = () => {
   ];
 
   const stats = [
-    { number: `${Math.floor(liveStats.users/1000)}K+`, label: "Active Users" },
-    { number: `${Math.floor(liveStats.ideas/1000*10)/10}K+`, label: "Ideas Shared" },
+    { number: `${Math.floor(liveStats.users / 1000)}K+`, label: "Active Users" },
+    { number: `${Math.floor(liveStats.ideas / 1000 * 10) / 10}K+`, label: "Ideas Shared" },
     { number: `${liveStats.teams}+`, label: "Teams Formed" },
     { number: `${liveStats.startups}+`, label: "Startups Launched" }
   ];
@@ -375,7 +459,7 @@ const HomePage = () => {
       avatar: "MR",
       content: "The platform's idea validation features saved us months of development time.",
       company: "500K users"
-    },  
+    },
     {
       name: "Emily Watson",
       role: "Founder, EcoTrack",
@@ -383,20 +467,20 @@ const HomePage = () => {
       content: "Connected with amazing talent. Our team went from 1 to 15 people!",
       company: "Series A"
     },
-   {
-    name:"John Doe",
-    role:"CEO, TechFlow",
-    avatar:"JD",
-    content:"Found my perfect co-founder in just 2 weeks. The AI matching is incredible!",
-    company:"$2M raised"
-   },
-   {
-    name:"Jane Smith",
-    role:"CEO, TechFlow",
-    avatar:"JS",
-    content:"Found my perfect co-founder in just 2 weeks. The AI matching is incredible!",
-    company:"$2M raised"
-   }
+    {
+      name: "John Doe",
+      role: "CEO, TechFlow",
+      avatar: "JD",
+      content: "Found my perfect co-founder in just 2 weeks. The AI matching is incredible!",
+      company: "$2M raised"
+    },
+    {
+      name: "Jane Smith",
+      role: "CEO, TechFlow",
+      avatar: "JS",
+      content: "Found my perfect co-founder in just 2 weeks. The AI matching is incredible!",
+      company: "$2M raised"
+    }
   ];
 
   const tabData = [
@@ -456,12 +540,12 @@ const HomePage = () => {
             liveActivities.forEach((_, index) => {
               setTimeout(() => {
                 setVisibleActivities(prev => new Set([...prev, index]));
-              }, index * 200); 
+              }, index * 200);
             });
           }
         });
       },
-      { 
+      {
         threshold: 0.2,
         rootMargin: '50px'
       }
@@ -481,7 +565,7 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-     
+
       <nav className="fixed top-0 w-full z-50 backdrop-blur-md bg-black/20 border-b border-white/10">
         <Container maxWidth="xl" className="py-4">
           <div className="flex justify-between items-center">
@@ -495,14 +579,14 @@ const HomePage = () => {
               </Typography>
             </div>
             <div className="flex items-center space-x-4">
-              <Button 
-                variant="outlined" 
+              <Button
+                variant="outlined"
                 className="text-white border-white/30 hover:border-white/50 "
               >
                 About
               </Button>
-              <Button 
-                variant="outlined" 
+              <Button
+                variant="outlined"
                 className="text-white border-white/30 hover:border-white/50"
               >
                 Features
@@ -525,17 +609,22 @@ const HomePage = () => {
           </div>
         </Container>
       </nav>
-       
+
       <section className="pt-32 pb-20 px-4">
         <Container maxWidth="lg" className="text-center">
           <div className="relative flex flex-col items-center">
-          <style>{`
+            <style>{`
   @keyframes fycoSweepGlow {
     0%   { transform: translate(-50%, 0) scale(0.6); opacity: 0.5; filter: blur(8px); }
     60%  { opacity: 0.75; }
     100% { transform: translate(-50%, 0) scale(2.4); opacity: 0.08; filter: blur(26px); }
   }
 `}</style>
+          </div>
+          <div className="mb-8">
+            <Chip
+              label="✨ Now in Beta"
+              className="bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-white/20 mb-1 -mt-10"
             </div>
             <div className="mb-8">
               <Chip 
@@ -568,21 +657,48 @@ const HomePage = () => {
                 animationDelay: '0.45s',
               }}
             />
-          
-            <Typography 
-              variant="h1" 
-              className="relative z-10 text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight"
-            >
+          </div>
+          <div
+            className="pointer-events-none absolute  left-1/2 z-0"
+            style={{
+              top: '14rem',
+              width: '48px',
+              height: '48px',
+              background: 'radial-gradient(closest-side, rgba(99,102,241,0.95) 0%, rgba(59,130,246,0.75) 40%, rgba(147,51,234,0.55) 60%, rgba(236,72,153,0.0) 82%)',
+              boxShadow: '0 0 40px 16px rgba(99,102,241,0.25), 0 0 80px 24px rgba(236,72,153,0.2)',
+              mixBlendMode: 'screen',
+              animation: 'fycoSweepGlow 3.2s ease-in-out infinite',
+            }}
+          />
+          {/* Secondary trailing glow */}
+          <div
+            className="pointer-events-none absolute  left-1/2 z-0"
+            style={{
+              top: '14rem',
+              width: '72px',
+              height: '72px',
+              background: 'radial-gradient(closest-side, rgba(99,102,241,0.45) 0%, rgba(59,130,246,0.35) 40%, rgba(147,51,234,0.25) 60%, rgba(236,72,153,0.0) 82%)',
+              boxShadow: '0 0 30px 12px rgba(99,102,241,0.18), 0 0 60px 18px rgba(236,72,153,0.15)',
+              mixBlendMode: 'screen',
+              animation: 'fycoSweepGlow 3.2s ease-in-out infinite',
+              animationDelay: '0.45s',
+            }}
+          />
+
+          <Typography
+            variant="h1"
+            className="relative z-10 text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight"
+          >
             Where
             <span className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent"> Ideas </span>
             Meet
-           
+
             <span className="relative inline-block align-baseline ml-1">
               <span className="invisible bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent"> Cofounders</span>
               <span className="absolute inset-0 pointer-events-none">
                 <span className="bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent whitespace-pre">
-              
-                  {' '}C 
+
+                  {' '}C
                   {coLetters.map((ch, idx) => (
                     <span
                       key={idx}
@@ -596,12 +712,12 @@ const HomePage = () => {
               </span>
             </span>
           </Typography>
-          
-          <Typography 
-            variant="h5" 
+
+          <Typography
+            variant="h5"
             className="text-gray-300 mb-12 py-10 mx-auto leading-relaxed"
           >
-           The next-generation platform where entrepreneurs share bold ideas, connect with visionary cofounders, and turn groundbreaking concepts into reality.
+            The next-generation platform where entrepreneurs share bold ideas, connect with visionary cofounders, and turn groundbreaking concepts into reality.
 
           </Typography>
 
@@ -663,8 +779,8 @@ const HomePage = () => {
           <div className="text-center mb-16">
             <Fade in timeout={1000}>
               <div>
-                <Chip 
-                  label="✨ Core Features" 
+                <Chip
+                  label="✨ Core Features"
                   sx={{
                     background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(59, 130, 246, 0.2))',
                     color: 'white',
@@ -673,10 +789,10 @@ const HomePage = () => {
                     fontWeight: 'bold'
                   }}
                 />
-                <Typography 
-                  variant="h2" 
+                <Typography
+                  variant="h2"
                   className="text-2xl md:text-3xl font-bold text-white mb-6"
-                  sx={{ 
+                  sx={{
                     background: 'linear-gradient(135deg, #10b981, #3b82f6)',
                     backgroundClip: 'text',
                     WebkitBackgroundClip: 'text',
@@ -687,10 +803,10 @@ const HomePage = () => {
                 >
                   Everything you need to succeed
                 </Typography>
-                <Typography 
-                  variant="h6" 
+                <Typography
+                  variant="h6"
                   className="text-gray-300 max-w-8xl mx-auto"
-                  sx={{ 
+                  sx={{
                     fontSize: '1.2rem',
                     lineHeight: 1.6,
                     fontWeight: 400
@@ -704,8 +820,8 @@ const HomePage = () => {
 
           <Box sx={{ maxWidth: '1400px', mx: 'auto' }}>
             {features.map((feature, index) => (
-              <Box 
-                key={index} 
+              <Box
+                key={index}
                 sx={{ mb: 6, position: 'relative' }}
                 onMouseEnter={() => setHoveredCard(index)}
                 onMouseLeave={() => setHoveredCard(null)}
@@ -730,16 +846,16 @@ const HomePage = () => {
                     })(),
                     borderRadius: '2px',
                     transition: 'width 0.5s ease',
-                    boxShadow: hoveredCard === index 
+                    boxShadow: hoveredCard === index
                       ? `0 0 15px ${(() => {
-                          const colorMap = {
-                            0: 'rgba(251, 191, 36, 0.5)',
-                            1: 'rgba(59, 130, 246, 0.5)',
-                            2: 'rgba(16, 185, 129, 0.5)',
-                            3: 'rgba(236, 72, 153, 0.5)'
-                          };
-                          return colorMap[index];
-                        })()}` 
+                        const colorMap = {
+                          0: 'rgba(251, 191, 36, 0.5)',
+                          1: 'rgba(59, 130, 246, 0.5)',
+                          2: 'rgba(16, 185, 129, 0.5)',
+                          3: 'rgba(236, 72, 153, 0.5)'
+                        };
+                        return colorMap[index];
+                      })()}`
                       : 'none',
                     zIndex: 10
                   }}
@@ -749,12 +865,12 @@ const HomePage = () => {
                   <Grid item xs={12} md={5}>
                     <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                       <Zoom in timeout={600 + index * 200}>
-                      <Card
-                        elevation={hoveredCard === index ? 8 : 5}
-                        sx={{
-                          background: 'transparent',
-                          border: `2px solid ${hoveredCard === index 
-                            ? (() => {
+                        <Card
+                          elevation={hoveredCard === index ? 8 : 5}
+                          sx={{
+                            background: 'transparent',
+                            border: `2px solid ${hoveredCard === index
+                              ? (() => {
                                 const borderMap = {
                                   0: 'rgba(251, 191, 36, 0.6)',
                                   1: 'rgba(59, 130, 246, 0.6)',
@@ -763,112 +879,112 @@ const HomePage = () => {
                                 };
                                 return borderMap[index];
                               })()
-                            : 'rgba(255,255,255,0.1)'}`,
-                          borderRadius: '16px',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s ease',
-                          height: '100%',
-                          transform: hoveredCard === index ? 'scale(1.02)' : 'scale(1)',
-                          boxShadow: (() => {
-                            const shadowMap = {
-                              0: hoveredCard === index 
-                                ? '0 20px 40px -8px rgba(251, 191, 36, 0.4), 0 6px 12px -2px rgba(249, 115, 22, 0.3)'
-                                : '0 10px 25px -5px rgba(251, 191, 36, 0.3), 0 4px 6px -2px rgba(249, 115, 22, 0.2)',
-                              1: hoveredCard === index 
-                                ? '0 20px 40px -8px rgba(59, 130, 246, 0.4), 0 6px 12px -2px rgba(147, 51, 234, 0.3)'
-                                : '0 10px 25px -5px rgba(59, 130, 246, 0.3), 0 4px 6px -2px rgba(147, 51, 234, 0.2)',
-                              2: hoveredCard === index 
-                                ? '0 20px 40px -8px rgba(16, 185, 129, 0.4), 0 6px 12px -2px rgba(20, 184, 166, 0.3)'
-                                : '0 10px 25px -5px rgba(16, 185, 129, 0.3), 0 4px 6px -2px rgba(20, 184, 166, 0.2)',
-                              3: hoveredCard === index 
-                                ? '0 20px 40px -8px rgba(236, 72, 153, 0.4), 0 6px 12px -2px rgba(239, 68, 68, 0.3)'
-                                : '0 10px 25px -5px rgba(236, 72, 153, 0.3), 0 4px 6px -2px rgba(239, 68, 68, 0.2)'
-                            };
-                            return shadowMap[index];
+                              : 'rgba(255,255,255,0.1)'}`,
+                            borderRadius: '16px',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            height: '100%',
+                            transform: hoveredCard === index ? 'scale(1.02)' : 'scale(1)',
+                            boxShadow: (() => {
+                              const shadowMap = {
+                                0: hoveredCard === index
+                                  ? '0 20px 40px -8px rgba(251, 191, 36, 0.4), 0 6px 12px -2px rgba(249, 115, 22, 0.3)'
+                                  : '0 10px 25px -5px rgba(251, 191, 36, 0.3), 0 4px 6px -2px rgba(249, 115, 22, 0.2)',
+                                1: hoveredCard === index
+                                  ? '0 20px 40px -8px rgba(59, 130, 246, 0.4), 0 6px 12px -2px rgba(147, 51, 234, 0.3)'
+                                  : '0 10px 25px -5px rgba(59, 130, 246, 0.3), 0 4px 6px -2px rgba(147, 51, 234, 0.2)',
+                                2: hoveredCard === index
+                                  ? '0 20px 40px -8px rgba(16, 185, 129, 0.4), 0 6px 12px -2px rgba(20, 184, 166, 0.3)'
+                                  : '0 10px 25px -5px rgba(16, 185, 129, 0.3), 0 4px 6px -2px rgba(20, 184, 166, 0.2)',
+                                3: hoveredCard === index
+                                  ? '0 20px 40px -8px rgba(236, 72, 153, 0.4), 0 6px 12px -2px rgba(239, 68, 68, 0.3)'
+                                  : '0 10px 25px -5px rgba(236, 72, 153, 0.3), 0 4px 6px -2px rgba(239, 68, 68, 0.2)'
+                              };
+                              return shadowMap[index];
                             })()
                           }}
-                          >
+                        >
                           <CardContent
                             sx={{
-                            background: 'transparent',
-                            borderRadius: '14px',
-                            p: 4,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            position: 'relative',
-                            overflow: 'hidden'
+                              background: 'transparent',
+                              borderRadius: '14px',
+                              p: 4,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              position: 'relative',
+                              overflow: 'hidden'
                             }}
                           >
                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                              <Box
+                                sx={{
+                                  p: 2,
+                                  borderRadius: '12px',
+                                  background: 'transparent',
+                                  border: '1px solid rgba(255,255,255,0.2)',
+                                  color: 'white',
+                                  mr: 2,
+                                  transition: 'all 0.3s ease',
+                                }}
+                              >
+                                {feature.icon}
+                              </Box>
+                              <Typography
+                                variant="h5"
+                                sx={{
+                                  color: 'white',
+                                  fontWeight: 700,
+                                  fontSize: '1.5rem',
+                                  letterSpacing: '-0.025em'
+                                }}
+                              >
+                                {feature.title}
+                              </Typography>
+                            </Box>
+
+                            <Typography
+                              variant="body1"
+                              sx={{
+                                color: 'rgba(203, 213, 225, 0.9)',
+                                lineHeight: 1.7,
+                                fontSize: '1.1rem',
+                                flexGrow: 1,
+                                fontWeight: 400,
+                                mb: 2
+                              }}
+                            >
+                              {feature.description}
+                            </Typography>
+
                             <Box
                               sx={{
-                              p: 2,
-                              borderRadius: '12px',
-                              background: 'transparent',
-                              border: '1px solid rgba(255,255,255,0.2)',
-                              color: 'white',
-                              mr: 2,
-                              transition: 'all 0.3s ease',
+                                pt: 2,
+                                borderTop: '1px solid rgba(255,255,255,0.1)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.3s ease'
                               }}
                             >
-                              {feature.icon}
-                            </Box>
-                            <Typography 
-                              variant="h5" 
-                              sx={{ 
-                              color: 'white', 
-                              fontWeight: 700,
-                              fontSize: '1.5rem',
-                              letterSpacing: '-0.025em'
-                              }}
-                            >
-                              {feature.title}
-                            </Typography>
-                            </Box>
-                            
-                            <Typography 
-                            variant="body1" 
-                            sx={{ 
-                              color: 'rgba(203, 213, 225, 0.9)',
-                              lineHeight: 1.7,
-                              fontSize: '1.1rem',
-                              flexGrow: 1,
-                              fontWeight: 400,
-                              mb: 2
-                            }}
-                            >
-                            {feature.description}
-                            </Typography>
-
-                            <Box
-                            sx={{
-                              pt: 2,
-                              borderTop: '1px solid rgba(255,255,255,0.1)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              transition: 'all 0.3s ease'
-                            }}
-                            >
-                            <Typography 
-                              variant="caption" 
-                              sx={{ 
-                              color: 'rgba(156, 163, 175, 0.8)',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.1em',
-                              fontWeight: 600
-                              }}
-                            >
-                              Hover to connect →
-                            </Typography>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: 'rgba(156, 163, 175, 0.8)',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.1em',
+                                  fontWeight: 600
+                                }}
+                              >
+                                Hover to connect →
+                              </Typography>
                             </Box>
                           </CardContent>
-                          </Card>
-                        </Zoom>
-                        </Box>
-                        </Grid>
+                        </Card>
+                      </Zoom>
+                    </Box>
+                  </Grid>
 
-                        {/* Details Panel - Center Right */}
+                  {/* Details Panel - Center Right */}
                   <Grid item xs={12} md={7}>
                     <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                       <Fade in timeout={800 + index * 300}>
@@ -877,42 +993,42 @@ const HomePage = () => {
                           sx={{
                             width: '100%',
                             maxWidth: '600px',
-                            background: hoveredCard === index 
+                            background: hoveredCard === index
                               ? (() => {
-                                  const bgMap = {
-                                    0: 'linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(249, 115, 22, 0.05))',
-                                    1: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.05))',
-                                    2: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(20, 184, 166, 0.05))',
-                                    3: 'linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(239, 68, 68, 0.05))'
-                                  };
-                                  return bgMap[index];
-                                })()
+                                const bgMap = {
+                                  0: 'linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(249, 115, 22, 0.05))',
+                                  1: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.05))',
+                                  2: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(20, 184, 166, 0.05))',
+                                  3: 'linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(239, 68, 68, 0.05))'
+                                };
+                                return bgMap[index];
+                              })()
                               : 'transparent',
-                            border: hoveredCard === index 
+                            border: hoveredCard === index
                               ? `1px solid ${(() => {
-                                  const borderMap = {
-                                    0: 'rgba(251, 191, 36, 0.3)',
-                                    1: 'rgba(59, 130, 246, 0.3)',
-                                    2: 'rgba(16, 185, 129, 0.3)',
-                                    3: 'rgba(236, 72, 153, 0.3)'
-                                  };
-                                  return borderMap[index];
-                                })()}`
+                                const borderMap = {
+                                  0: 'rgba(251, 191, 36, 0.3)',
+                                  1: 'rgba(59, 130, 246, 0.3)',
+                                  2: 'rgba(16, 185, 129, 0.3)',
+                                  3: 'rgba(236, 72, 153, 0.3)'
+                                };
+                                return borderMap[index];
+                              })()}`
                               : 'none',
                             borderRadius: '16px',
                             transition: 'all 0.5s ease',
                             transform: hoveredCard === index ? 'scale(1.02)' : 'scale(1)',
                             opacity: hoveredCard === index ? 1 : 0.7,
-                            boxShadow: hoveredCard === index 
+                            boxShadow: hoveredCard === index
                               ? (() => {
-                                  const shadowMap = {
-                                    0: '0 8px 30px -4px rgba(251, 191, 36, 0.2)',
-                                    1: '0 8px 30px -4px rgba(59, 130, 246, 0.2)',
-                                    2: '0 8px 30px -4px rgba(16, 185, 129, 0.2)',
-                                    3: '0 8px 30px -4px rgba(236, 72, 153, 0.2)'
-                                  };
-                                  return shadowMap[index];
-                                })()
+                                const shadowMap = {
+                                  0: '0 8px 30px -4px rgba(251, 191, 36, 0.2)',
+                                  1: '0 8px 30px -4px rgba(59, 130, 246, 0.2)',
+                                  2: '0 8px 30px -4px rgba(16, 185, 129, 0.2)',
+                                  3: '0 8px 30px -4px rgba(236, 72, 153, 0.2)'
+                                };
+                                return shadowMap[index];
+                              })()
                               : 'none'
                           }}
                         >
@@ -958,8 +1074,8 @@ const HomePage = () => {
                               </Typography>
                               {feature.detailedInfo.details.map((detail, idx) => (
                                 <Box key={idx} sx={{ display: 'flex', alignItems: 'flex-start', mb: 1.5 }}>
-                                  <CheckCircle 
-                                    sx={{ 
+                                  <CheckCircle
+                                    sx={{
                                       color: (() => {
                                         const colorMap = {
                                           0: '#facc15',
@@ -973,7 +1089,7 @@ const HomePage = () => {
                                       mr: 1.5,
                                       mt: 0.1,
                                       flexShrink: 0
-                                    }} 
+                                    }}
                                   />
                                   <Typography variant="body2" sx={{ color: 'rgba(203, 213, 225, 0.9)', lineHeight: 1.5 }}>
                                     {detail}
@@ -997,9 +1113,9 @@ const HomePage = () => {
                                 {Object.entries(feature.detailedInfo.stats).map(([key, value], idx) => (
                                   <Grid item xs={4} key={key}>
                                     <Box sx={{ textAlign: 'center' }}>
-                                      <Typography 
-                                        variant="h6" 
-                                        sx={{ 
+                                      <Typography
+                                        variant="h6"
+                                        sx={{
                                           color: (() => {
                                             const colorMap = {
                                               0: '#facc15',
@@ -1015,9 +1131,9 @@ const HomePage = () => {
                                       >
                                         {value}
                                       </Typography>
-                                      <Typography 
-                                        variant="caption" 
-                                        sx={{ 
+                                      <Typography
+                                        variant="caption"
+                                        sx={{
                                           color: 'rgba(156, 163, 175, 0.8)',
                                           textTransform: 'capitalize',
                                           fontSize: '0.7rem'
@@ -1031,7 +1147,7 @@ const HomePage = () => {
                               </Grid>
                             </Box>
                           </CardContent>
-                      </Card>
+                        </Card>
                       </Fade>
                     </Box>
                   </Grid>
@@ -1057,7 +1173,7 @@ const HomePage = () => {
           </div>
 
           <div className="grid lg:grid-cols-3 gap-8">
-         
+
             <div className="lg:col-span-1">
               <div className="space-y-6">
                 <div className="p-6 rounded-xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-white/10 backdrop-blur-sm">
@@ -1071,9 +1187,9 @@ const HomePage = () => {
                         <Typography variant="body2" className="text-gray-300">Ideas Posted Today</Typography>
                         <Typography variant="body2" className="text-white font-semibold">+{Math.floor(Math.random() * 50 + 20)}</Typography>
                       </div>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={75} 
+                      <LinearProgress
+                        variant="determinate"
+                        value={75}
                         className="h-2 rounded-full bg-slate-700"
                         sx={{ '& .MuiLinearProgress-bar': { backgroundColor: '#10b981' } }}
                       />
@@ -1083,16 +1199,16 @@ const HomePage = () => {
                         <Typography variant="body2" className="text-gray-300">New Connections</Typography>
                         <Typography variant="body2" className="text-white font-semibold">+{Math.floor(Math.random() * 30 + 10)}</Typography>
                       </div>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={60} 
+                      <LinearProgress
+                        variant="determinate"
+                        value={60}
                         className="h-2 rounded-full bg-slate-700"
                         sx={{ '& .MuiLinearProgress-bar': { backgroundColor: '#3b82f6' } }}
                       />
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="p-6 rounded-xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-white/10 backdrop-blur-sm">
                   <Typography variant="h6" className="text-white mb-4 flex items-center gap-2">
                     <People className="text-blue-400" />
@@ -1133,7 +1249,7 @@ const HomePage = () => {
                     ))}
                   </Tabs>
                 </div>
-                
+
                 <div className="p-8">
                   <div className="grid md:grid-cols-2 gap-8">
                     <div>
@@ -1154,7 +1270,7 @@ const HomePage = () => {
                         ))}
                       </div>
                     </div>
-                    
+
                     <div className="space-y-4">
                       <div className="aspect-video rounded-lg bg-gradient-to-br from-slate-700/50 to-slate-800/50 border border-white/10 flex items-center justify-center">
                         <PlayArrow className="w-16 h-16 text-white/50" />
@@ -1185,17 +1301,16 @@ const HomePage = () => {
               Real stories from real founders who found their perfect match
             </Typography>
           </div>
-          
+
           <div className="relative">
-            <div className="flex gap-8 transition-transform duration-700 ease-out" 
-                 style={{transform: `translateX(-${currentTestimonial * 33.33}%)`}}>
+            <div className="flex gap-8 transition-transform duration-700 ease-out"
+              style={{ transform: `translateX(-${currentTestimonial * 33.33}%)` }}>
               {testimonials.map((t, idx) => (
                 <div key={idx} className="flex-shrink-0 w-full md:w-1/3">
-                  <div className={`p-8 rounded-2xl transition-all duration-500 ${
-                    idx === currentTestimonial 
-                      ? 'bg-gradient-to-br from-blue-600/20 to-purple-600/20 border-2 border-purple-500/50 transform scale-105' 
-                      : 'bg-slate-800/30 border border-white/10 hover:border-white/20'
-                  } backdrop-blur-sm`}>
+                  <div className={`p-8 rounded-2xl transition-all duration-500 ${idx === currentTestimonial
+                    ? 'bg-gradient-to-br from-blue-600/20 to-purple-600/20 border-2 border-purple-500/50 transform scale-105'
+                    : 'bg-slate-800/30 border border-white/10 hover:border-white/20'
+                    } backdrop-blur-sm`}>
                     <div className="flex items-center gap-4 mb-6">
                       <div className="relative">
                         <Avatar className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 text-lg font-bold">
@@ -1228,7 +1343,7 @@ const HomePage = () => {
           <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-blue-500/10 rounded-full blur-xl animate-pulse"></div>
           <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-purple-500/10 rounded-full blur-xl animate-pulse delay-1000"></div>
         </div>
-        
+
         <Container maxWidth="md" className="relative z-10">
           <div className="text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500/20 to-blue-500/20 border border-emerald-500/30 mb-8">
@@ -1237,14 +1352,14 @@ const HomePage = () => {
                 {liveStats.users.toLocaleString()} founders already building
               </Typography>
             </div>
-            
+
             <Typography variant="h2" className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
               Your co-founder is
               <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent"> waiting</span>
             </Typography>
-            
+
             <Typography variant="h6" className="text-gray-300 mb-12 max-w-2xl mx-auto leading-relaxed">
-              Join the most innovative founders building tomorrow's unicorns. 
+              Join the most innovative founders building tomorrow's unicorns.
               Find your perfect match in minutes, not months.
             </Typography>
 
@@ -1269,7 +1384,7 @@ const HomePage = () => {
                 </Button>
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg opacity-0 group-hover:opacity-20 transition-opacity duration-300 -z-10"></div>
               </div>
-              
+
               <Button
                 variant="text"
                 size="large"
@@ -1279,7 +1394,7 @@ const HomePage = () => {
                 Watch Demo
               </Button>
             </div>
-            
+
             <div className="flex justify-center items-center gap-8 text-gray-400">
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 text-emerald-400" />
@@ -1312,11 +1427,11 @@ const HomePage = () => {
                 Aarambh
                 </Typography>
               </div>
-              
+
               <Typography variant="body1" className="text-gray-300 mb-6 max-w-md leading-relaxed">
                 The AI-powered platform where ambitious founders connect, collaborate, and create the next generation of successful startups.
               </Typography>
-              
+
               <div className="flex gap-4">
                 <IconButton className="w-12 h-12 border border-white/10 hover:border-white/20 text-white/70 hover:text-white transition-all duration-300 hover:bg-white/5">
                   <Twitter />
@@ -1330,7 +1445,7 @@ const HomePage = () => {
               </div>
             </div>
 
-           
+
             <div>
               <Typography variant="subtitle1" className="text-white font-semibold mb-4">Product</Typography>
               <ul className="space-y-3">
@@ -1343,7 +1458,7 @@ const HomePage = () => {
                 ))}
               </ul>
             </div>
-            
+
             <div>
               <Typography variant="subtitle1" className="text-white font-semibold mb-4">Company</Typography>
               <ul className="space-y-3">
@@ -1356,7 +1471,7 @@ const HomePage = () => {
                 ))}
               </ul>
             </div>
-            
+
             <div>
               <Typography variant="subtitle1" className="text-white font-semibold mb-4">Resources</Typography>
               <ul className="space-y-3">
@@ -1370,12 +1485,12 @@ const HomePage = () => {
               </ul>
             </div>
           </div>
-          
+
           <div className="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
             <Typography variant="body2" className="text-gray-500">
               &copy; 2025 Team Aarambh. All rights reserved.
             </Typography>
-            
+
             <div className="flex gap-6">
               {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map((item) => (
                 <Typography key={item} variant="body2" className="text-gray-500 hover:text-gray-300 cursor-pointer transition-colors">
@@ -1383,7 +1498,7 @@ const HomePage = () => {
                 </Typography>
               ))}
             </div>
-            
+
             <div className="flex items-center gap-2 text-gray-500">
               <Typography variant="body2">Made with</Typography>
               <span className="text-red-500 animate-pulse">❤️</span>
