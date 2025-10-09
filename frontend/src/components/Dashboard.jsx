@@ -13,7 +13,6 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useTheme } from './Layout.jsx';
-import  Spline  from '@splinetool/react-spline';
 import { supabase } from '../lib/supabaseClient.js';
 const Dashboard = () => {
   const { theme } = useTheme();

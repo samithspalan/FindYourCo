@@ -1,17 +1,17 @@
 import React, { useState, createContext, useContext, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Home, 
-  Plus, 
-  Bot, 
-  Users, 
+import {motion, AnimatePresence } from 'framer-motion';
+import {
+  Home,
+  Plus,
+  Bot,
+  Users,
   LogOut,
   Sun,
   Moon,
   Settings
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { signOut } from '../lib/supabaseClient';
+import { signOut, supabase } from '../lib/supabaseClient';
 
 const ThemeContext = createContext();
 export const useTheme = () => useContext(ThemeContext);
@@ -22,19 +22,42 @@ const Layout = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const settingsRef = useRef(null);
+  const [UserInfo, setUserInfo] = useState({ fullName: '', avatar_url: '', Email: '' })
 
   const handleLogout = async () => {
     setShowSettings(false);
-    try { await signOut(); } catch (e) { /* ignore */ }
-    try { localStorage.removeItem('fyco_isLoggedIn'); } catch (e) {}
+    try { await signOut(); } catch (error) { console.log(error) }
+    try { localStorage.removeItem('fyco_isLoggedIn'); } catch (error) { console.log(error)}
     // navigate home and pass a toast message via navigation state
     navigate('/', { state: { showToast: true, message: 'Logged out' } });
   };
 
   const handleNavigate = (path) => {
     navigate(path);
-    setShowSettings(false); 
+    setShowSettings(false);
   };
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const { data, error } = await supabase.auth.getUser();
+        if (error || !data.user)
+          return;
+
+        const metadata = data.user.user_metadata;
+
+        setUserInfo({
+          fullName: metadata.name || '',
+          avatar_url: metadata.avatar_url || '',
+          Email: metadata.email || ''
+        })
+      } catch (error) {
+        console.error('Error fetching user:', error);
+      }
+    };
+    fetchUserInfo();
+  }, [])
+
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -58,7 +81,7 @@ const Layout = ({ children }) => {
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
-    setShowSettings(false); 
+    setShowSettings(false);
   };
 
   const theme = {
@@ -75,7 +98,7 @@ const Layout = ({ children }) => {
   return (
     <ThemeContext.Provider value={{ isDarkMode, toggleTheme, theme }}>
       <div className={`min-h-screen bg-gradient-to-br ${theme.bg} transition-all duration-300`}>
-     
+
         <motion.nav
           initial={{ x: -100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -96,11 +119,10 @@ const Layout = ({ children }) => {
                   key={item.id}
                   onClick={() => handleNavigate(item.path)}
                   whileHover={{ x: 4 }}
-                  className={`w-full flex items-center space-x-3 p-3 rounded-xl transition-all ${
-                    isActive
-                      ? 'bg-blue-600 text-white shadow-lg'
-                      : `${theme.textSecondary} ${theme.hover}`
-                  }`}
+                  className={`w-full flex items-center space-x-3 p-3 rounded-xl transition-all ${isActive
+                    ? 'bg-blue-600 text-white shadow-lg'
+                    : `${theme.textSecondary} ${theme.hover}`
+                    }`}
                 >
                   {item.icon}
                   <span className="font-medium">{item.label}</span>
@@ -110,15 +132,26 @@ const Layout = ({ children }) => {
           </div>
           <div className={`mt-8 pt-6 ${theme.border} border-t`}>
             <div className={`flex items-center space-x-3 p-3 rounded-xl ${theme.cardBg} backdrop-blur-md mb-3`}>
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
-                YO
+              <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+                {UserInfo.avatar_url ? (
+                  <img
+                    src={UserInfo.avatar_url}
+                    alt={UserInfo.fullName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-blue-500 text-white font-semibold">
+                    {UserInfo.fullName ? UserInfo.fullName[0].toUpperCase() : 'U'}
+                  </div>
+                )}
               </div>
               <div>
-                <div className={`${theme.text} font-medium`}>Your Name</div>
-                <div className={`${theme.textMuted} text-sm`}>@yourhandle</div>
+                <div className={`${theme.text} font-medium`}>{UserInfo.fullName || ''}</div>
+                <div className={`${theme.textMuted} text-sm`}>{UserInfo.email || ''}</div>
               </div>
             </div>
-            
+
+
             <div className="relative" ref={settingsRef}>
               <button
                 onClick={() => setShowSettings(!showSettings)}
@@ -146,30 +179,30 @@ const Layout = ({ children }) => {
                     exit={{ opacity: 0, y: -10 }}
                     className={`absolute bottom-full left-0 right-0 mb-2 ${theme.cardBg} backdrop-blur-xl ${theme.border} border rounded-xl shadow-xl overflow-hidden`}
                   >
-               
-                  <button
-                    onClick={toggleTheme}
-                    className={`w-full flex items-center justify-between p-3 ${theme.hover} transition-all ${theme.textSecondary}`}
-                  >
-                    <div className="flex items-center space-x-3">
-                      {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                      <span className="font-medium">
-                        {isDarkMode ? 'Light Mode' : 'Dark Mode'}
-                      </span>
-                    </div>
-                    <div className={`w-10 h-5 ${isDarkMode ? 'bg-blue-600' : 'bg-gray-300'} rounded-full relative transition-all duration-300`}>
-                      <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-transform duration-300 ${isDarkMode ? 'translate-x-5' : 'translate-x-0.5'}`} />
-                    </div>
-                  </button>
 
-                 
-                  <button
-                    onClick={handleLogout}
-                    className={`w-full flex items-center space-x-3 p-3 ${theme.textSecondary} hover:text-red-400 ${theme.hover} transition-all border-t ${theme.border}`}
-                  >
-                    <LogOut className="w-5 h-5" />
-                    <span className="font-medium">Logout</span>
-                  </button>
+                    <button
+                      onClick={toggleTheme}
+                      className={`w-full flex items-center justify-between p-3 ${theme.hover} transition-all ${theme.textSecondary}`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                        <span className="font-medium">
+                          {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+                        </span>
+                      </div>
+                      <div className={`w-10 h-5 ${isDarkMode ? 'bg-blue-600' : 'bg-gray-300'} rounded-full relative transition-all duration-300`}>
+                        <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-transform duration-300 ${isDarkMode ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                      </div>
+                    </button>
+
+
+                    <button
+                      onClick={handleLogout}
+                      className={`w-full flex items-center space-x-3 p-3 ${theme.textSecondary} hover:text-red-400 ${theme.hover} transition-all border-t ${theme.border}`}
+                    >
+                      <LogOut className="w-5 h-5" />
+                      <span className="font-medium">Logout</span>
+                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>

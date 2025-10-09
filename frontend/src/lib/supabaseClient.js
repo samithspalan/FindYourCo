@@ -17,6 +17,18 @@ export async function signIn({ email, password }) {
   return { data, error };
 }
 
+// Sign in user using Google OAuth
+export async function signInWithGoogle() {
+  const { data , error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options :{
+      redirectTo : window.location.origin,
+    },
+  });
+
+  return { data , error}
+}
+
 // Sign out
 export async function signOut() {
   const { error } = await supabase.auth.signOut();
@@ -29,7 +41,9 @@ export function getUser() {
 }
 
 // Optional: keep insertUser if you want to store profile data in a table after sign-up
-export async function insertUserProfile(profile) {
-  const { data, error } = await supabase.from('users').insert([profile]);
+export async function UpsertUser(profile) {
+  const { data, error } = await supabase.from('users').insert([profile],{
+     onConflict: ['id'],
+  });
   return { data, error };
 }
