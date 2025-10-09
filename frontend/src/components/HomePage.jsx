@@ -532,7 +532,6 @@ const HomePage = () => {
     return () => clearInterval(interval);
   }, [testimonials.length]);
 
-  // Simple scroll animation for live activity items
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -552,7 +551,6 @@ const HomePage = () => {
       }
     );
 
-    // Observe the container
     const container = document.querySelector('[data-activity-container]');
     if (container) {
       observer.observe(container);
@@ -627,6 +625,37 @@ const HomePage = () => {
             <Chip
               label="✨ Now in Beta"
               className="bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-white/20 mb-1 -mt-10"
+            </div>
+            <div className="mb-8">
+              <Chip 
+                label="✨ Now in Beta" 
+                className="bg-gradient-to-r from-blue-500/20 to-purple-600/20 text-white border border-white/20 mb-1 -mt-10"
+              />
+            </div>
+            <div
+              className="pointer-events-none absolute  left-1/2 z-0"
+              style={{
+                top: '14rem',
+                width: '48px',
+                height: '48px',
+                background: 'radial-gradient(closest-side, rgba(99,102,241,0.95) 0%, rgba(59,130,246,0.75) 40%, rgba(147,51,234,0.55) 60%, rgba(236,72,153,0.0) 82%)',
+                boxShadow: '0 0 40px 16px rgba(99,102,241,0.25), 0 0 80px 24px rgba(236,72,153,0.2)',
+                mixBlendMode: 'screen',
+                animation: 'fycoSweepGlow 3.2s ease-in-out infinite',
+              }}
+            />
+            <div
+              className="pointer-events-none absolute  left-1/2 z-0"
+              style={{
+                top: '14rem',
+                width: '72px',
+                height: '72px',
+                background: 'radial-gradient(closest-side, rgba(99,102,241,0.45) 0%, rgba(59,130,246,0.35) 40%, rgba(147,51,234,0.25) 60%, rgba(236,72,153,0.0) 82%)',
+                boxShadow: '0 0 30px 12px rgba(99,102,241,0.18), 0 0 60px 18px rgba(236,72,153,0.15)',
+                mixBlendMode: 'screen',
+                animation: 'fycoSweepGlow 3.2s ease-in-out infinite',
+                animationDelay: '0.45s',
+              }}
             />
           </div>
           <div
@@ -1395,7 +1424,7 @@ const HomePage = () => {
                   <Code className="text-white w-6 h-6" />
                 </div>
                 <Typography variant="h5" className="text-white font-bold">
-                  FindYourCO
+                Aarambh
                 </Typography>
               </div>
 
@@ -1459,7 +1488,7 @@ const HomePage = () => {
 
           <div className="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
             <Typography variant="body2" className="text-gray-500">
-              © 2025 FindYourCO Inc. All rights reserved.
+              &copy; 2025 Team Aarambh. All rights reserved.
             </Typography>
 
             <div className="flex gap-6">

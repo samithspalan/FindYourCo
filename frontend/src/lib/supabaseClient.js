@@ -47,3 +47,32 @@ export async function UpsertUser(profile) {
   });
   return { data, error };
 }
+
+// Get all posts (ordered by creation date, newest first)
+export async function getPosts() {
+  console.log('getPosts function called');
+  try {
+    const { data, error } = await supabase
+      .from('posts')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    console.log('Supabase response:', { data, error });
+    return { data, error };
+  } catch (err) {
+    console.error('Exception in getPosts:', err);
+    return { data: null, error: err };
+  }
+}
+
+// Test function to check Supabase connection
+export async function testSupabaseConnection() {
+  try {
+    const { data, error } = await supabase.from('posts').select('count', { count: 'exact' });
+    console.log('Connection test result:', { data, error });
+    return { data, error };
+  } catch (err) {
+    console.error('Connection test error:', err);
+    return { data: null, error: err };
+  }
+}
