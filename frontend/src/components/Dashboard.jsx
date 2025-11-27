@@ -7,13 +7,11 @@ import {
   Heart,
   Repeat2,
   Share2,
-  MoreHorizontal,
-  CheckCircle,
   Users,
   Sparkles
 } from 'lucide-react';
 import { useTheme } from './Layout.jsx';
-import { supabase, getPosts, testSupabaseConnection } from '../lib/supabaseClient.js';
+import { supabase, getPostsWithUserDetails, testSupabaseConnection } from '../lib/supabaseClient.js';
 
 const Dashboard = () => {
   const { theme } = useTheme();
@@ -30,13 +28,9 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (navState.showToast) {
-      // clear the navigation state so toast doesn't reappear on refresh/back
       navigate(location.pathname, { replace: true });
     }
   }, [navState, navigate, location.pathname]);
-
-
-  // Removed mockPosts - using real data from Supabase
 
   const tabs = [
     {
@@ -63,31 +57,20 @@ const Dashboard = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       setCurrentUser(user);
-      console.log('Current user:', user);
     } catch (error) {
       console.error('Error getting user:', error);
     }
   };
 
-  // Track posts state changes
-  useEffect(() => {
-    console.log("Posts state changed:", posts);
-  }, [posts]);
-
   const loadPosts = async () => {
+    setLoading(true);
     try {
-      console.log('Starting to fetch posts...');
-      const { data, error } = await getPosts();
-      console.log('Raw response from getPosts:', { data, error });
-      
+      const { data, error } = await getPostsWithUserDetails();
       if (error) {
         console.error('Error fetching posts:', error);
         alert(`Error fetching posts: ${error.message}`);
       } else {
-        console.log("Number of posts fetched:", data?.length || 0);
-        console.log("The posts are: ", data);
         setPosts(data || []);
-        console.log("Posts state after setting:", data || []);
       }
     } catch (err) {
       console.error('Error loading posts:', err);
@@ -102,7 +85,6 @@ const Dashboard = () => {
     const now = new Date();
     const postTime = new Date(timestamp);
     const diffInMinutes = Math.floor((now - postTime) / (1000 * 60));
-    
     if (diffInMinutes < 60) {
       return `${diffInMinutes}m`;
     } else if (diffInMinutes < 1440) {
@@ -112,43 +94,51 @@ const Dashboard = () => {
     }
   };
 
-  const generateAvatar = (userId) => {
-    
-    if (currentUser && userId === currentUser.id && currentUser.email) {
-      const username = currentUser.email.split('@')[0];
-      return username.substring(0, 2).toUpperCase();
-    }
-    return userId.substring(0, 2).toUpperCase();
-  };
-
-  const getDisplayName = (userId) => {
-    if (currentUser && userId === currentUser.id && currentUser.email) {
+  // Get display name and avatar from userDetails or fallback to profile or user_id
+  const getDisplayName = (post) => {
+    if (post.userDetails && post.userDetails.full_name) return post.userDetails.full_name;
+    if (post.profile && post.profile.auth_user_id === currentUser?.id && currentUser?.email) {
       return currentUser.email.split('@')[0];
     }
     return 'Anonymous User';
   };
 
-  const getHandle = (userId) => {
-    if (currentUser && userId === currentUser.id && currentUser.email) {
-      return `@${currentUser.email.split('@')[0]}`;
+  const getAvatar = (post) => {
+    if (post.userDetails && post.userDetails.profile_photo)
+      return (
+        <img
+          src={post.userDetails.profile_photo}
+          alt="avatar"
+          className="w-10 h-10 rounded-full object-cover"
+        />
+      );
+    if (post.profile && post.profile.auth_user_id === currentUser?.id && currentUser?.email) {
+      const username = currentUser.email.split('@')[0];
+      return (
+        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+          {username.substring(0, 2).toUpperCase()}
+        </div>
+      );
     }
-    return `@user_${userId.substring(0, 8)}`;
+    return (
+      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+        {post.user_id?.substring(0, 2).toUpperCase()}
+      </div>
+    );
   };
 
-  const handleTestConnection = async () => {
-    console.log('Testing Supabase connection...');
-    const result = await testSupabaseConnection();
-    console.log('Test result:', result);
-    
-    console.log('Testing getPosts...');
-    const postsResult = await getPosts();
-    console.log('Posts result:', postsResult);
+  const getHandle = (post) => {
+    if (post.userDetails && post.userDetails.full_name)
+      return `@${post.userDetails.full_name.replace(/\s+/g, '').toLowerCase()}`;
+    if (post.profile && post.profile.auth_user_id === currentUser?.id && currentUser?.email) {
+      return `@${currentUser.email.split('@')[0]}`;
+    }
+    return `@user_${post.user_id?.substring(0, 8)}`;
   };
 
   return (
-  <div className="min-h-screen">
+    <div className="min-h-screen">
       <div className={`sticky top-0 z-30 ${theme.sidebarBg} backdrop-blur-xl ${theme.border} border-b`}>
-     
         <div className="flex">
           {tabs.map((tab) => (
             <motion.button
@@ -165,7 +155,6 @@ const Dashboard = () => {
                 {tab.icon}
                 <span className="text-base">{tab.label}</span>
               </div>
-              
               {activeTab === tab.id && (
                 <motion.div
                   layoutId="activeTab"
@@ -199,22 +188,17 @@ const Dashboard = () => {
                 className={`px-4 py-4 ${theme.hover} transition-colors cursor-pointer`}
               >
                 <div className="flex space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
-                    {generateAvatar(post.user_id)}
-                  </div>
-                  
+                  {getAvatar(post)}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-1 mb-1">
-                      <h3 className={`font-bold ${theme.text} truncate`}>{getDisplayName(post.user_id)}</h3>
-                      <span className={`${theme.textMuted} text-sm`}>{getHandle(post.user_id)}</span>
+                      <h3 className={`font-bold ${theme.text} truncate`}>{getDisplayName(post)}</h3>
+                      <span className={`${theme.textMuted} text-sm`}>{getHandle(post)}</span>
                       <span className={`${theme.textMuted} text-sm`}>·</span>
                       <span className={`${theme.textMuted} text-sm`}>{formatTimeAgo(post.created_at)}</span>
                     </div>
-                    
                     <div className="mb-3">
                       <p className={`${theme.textSecondary} leading-relaxed`}>{post.post_content}</p>
                     </div>
-                    
                     {post.tags && post.tags.length > 0 && (
                       <div className="flex flex-wrap gap-2 mb-3">
                         {post.tags.map((tag, tagIndex) => (
@@ -227,7 +211,6 @@ const Dashboard = () => {
                         ))}
                       </div>
                     )}
-                    
                     {post.location && (
                       <div className="mb-3">
                         <span className="px-2 py-1 bg-purple-500/10 text-purple-500 rounded-full text-xs font-medium">
@@ -235,7 +218,24 @@ const Dashboard = () => {
                         </span>
                       </div>
                     )}
-                    
+                    {/* Show role and extra info */}
+                    {post.role && (
+                      <div className="mb-2">
+                        <span className="px-2 py-1 bg-green-500/10 text-green-700 rounded-full text-xs font-medium mr-2">
+                          {post.role === 'founder' ? 'Founder' : 'Employee'}
+                        </span>
+                        {post.userDetails && post.role === 'founder' && post.userDetails.looking_for && (
+                          <span className="px-2 py-1 bg-blue-500/10 text-blue-700 rounded-full text-xs font-medium">
+                            Looking for: {post.userDetails.looking_for}
+                          </span>
+                        )}
+                        {post.userDetails && post.role === 'employee' && post.userDetails.current_position && (
+                          <span className="px-2 py-1 bg-blue-500/10 text-blue-700 rounded-full text-xs font-medium">
+                            {post.userDetails.current_position}
+                          </span>
+                        )}
+                      </div>
+                    )}
                     <div className="flex items-center justify-between max-w-md mt-3">
                       <motion.button
                         whileHover={{ scale: 1.1 }}
@@ -245,7 +245,6 @@ const Dashboard = () => {
                         <MessageCircle className="w-4 h-4" />
                         <span className="text-sm">0</span>
                       </motion.button>
-                      
                       <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
@@ -254,7 +253,6 @@ const Dashboard = () => {
                         <Repeat2 className="w-4 h-4" />
                         <span className="text-sm">0</span>
                       </motion.button>
-                      
                       <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
@@ -263,7 +261,6 @@ const Dashboard = () => {
                         <Heart className="w-4 h-4" />
                         <span className="text-sm">0</span>
                       </motion.button>
-                      
                       <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}

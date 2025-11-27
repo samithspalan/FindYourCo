@@ -136,54 +136,77 @@ const HomePage = () => {
     try {
       let result;
 
+
       if (mode === 'signup') {
         result = await signUp({ email, password });
+        // After signup, get the user and insert into profiles table
+     
+        // // Insert into profiles table with no role yet
+        // const {data, error: profileInsertError } = await supabase
+        //   .from('profiles')
+        //   .insert([{ auth_user_id: newUser.id, role: null }]);
+
+        //   console.log('Inserted profile row:', data, profileInsertError);
+
+        // if (profileInsertError) {
+        //   console.error('Error inserting profile row:', profileInsertError);
+        //   setToast({ open: true, message: 'Error creating profile row' });
+        //   setLoading(false);
+        //   return;
+        // }
+        // Optionally upsert user metadata
+        // await UpsertUser({
+        //   id: newUser.id,
+        //   email: newUser.email,
+        //   full_name: newUser.user_metadata?.full_name || '',
+        //   first_name: newUser.user_metadata?.given_name || '',
+        //   last_name: newUser.user_metadata?.family_name || '',
+        //   avatar_url: newUser.user_metadata?.avatar_url || '',
+        //   provider: 'email',
+        //   locale: newUser.user_metadata?.locale || '',
+        //   created_at: newUser.created_at,
+        //   last_sign_in_at: newUser.last_sign_in_at
+        // });
+        try { localStorage.setItem('fyco_isLoggedIn', '1'); } catch (error) { console.log("Error is : ",error) }
+        setIsLoggedIn(true);
+        setLoading(false);
+        setLoginOpen(false);
+        // Redirect to role selection after signup
+        navigate('/role-selection', {
+          state: { showToast: true, message: 'Signed up successfully! Please select your role.' }
+        });
+        return;
       } else {
         result = await signIn({ email, password });
-      }
-      console.log("Result is : ", result);
-      const { data, error } = await supabase.auth.getUser();
-      const user = data?.user;
-
-      if(error)
-        return;
-
-      if (!user) {
-        setToast({ open: true, message: 'Auth failed: no user returned' });
+        const { data, error } = await supabase.auth.getUser();
+        const user = data?.user;
+        // if(error) return;
+        if (!user) {
+          setToast({ open: true, message: 'Auth failed: no user returned' });
+          setLoading(false);
+          return;
+        }
+        // const { error: upsertError } = await UpsertUser({
+        //   id: user.id,
+        //   email: user.email,
+        //   full_name: user.user_metadata?.full_name || '',
+        //   first_name: user.user_metadata?.given_name || '',
+        //   last_name: user.user_metadata?.family_name || '',
+        //   avatar_url: user.user_metadata?.avatar_url || '',
+        //   provider: 'email',
+        //   locale: user.user_metadata?.locale || '',
+        //   created_at: user.created_at,
+        //   last_sign_in_at: user.last_sign_in_at
+        // });
+        // if (upsertError) console.error('Error upserting user:', upsertError);
+        try { localStorage.setItem('fyco_isLoggedIn', '1'); } catch (error) { console.log("Error is : ",error) }
+        setIsLoggedIn(true);
         setLoading(false);
-        return;
+        setLoginOpen(false);
+        navigate('/dashboard', {
+          state: { showToast: true, message: 'Signed in successfully' }
+        });
       }
-
-      const { error: upsertError } = await UpsertUser({
-        id: user.id,
-        email: user.email,
-        full_name: user.user_metadata?.full_name || '',
-        first_name: user.user_metadata?.given_name || '',
-        last_name: user.user_metadata?.family_name || '',
-        avatar_url: user.user_metadata?.avatar_url || '',
-        provider: 'email',
-        locale: user.user_metadata?.locale || '',
-        created_at: user.created_at,
-        last_sign_in_at: user.last_sign_in_at
-      });
-
-      if (upsertError) console.error('Error upserting user:', upsertError);
-
-      // Persist login flag
-      try { 
-        localStorage.setItem('fyco_isLoggedIn', '1'); 
-      } catch (error) 
-      { 
-        console.log("Error is : ",error)
-      }
-
-      setIsLoggedIn(true);
-      setLoading(false);
-      setLoginOpen(false);
-
-      navigate('/dashboard', {
-        state: { showToast: true, message: mode === 'signup' ? 'Signed up successfully' : 'Signed in successfully' }
-      });
 
     } catch (err) {
       setLoading(false);
@@ -240,7 +263,7 @@ useEffect(() => {
             setToast({ open: true, message: 'Logged in successfully with Google' });
 
             // Redirect only if currently on root/login
-            navigate('/dashboard');
+            // navigate('/dashboard');
           } catch (e) {
             console.error('Error upserting Google user:', e);
           } finally {

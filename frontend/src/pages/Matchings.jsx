@@ -22,6 +22,12 @@ import {
 } from 'lucide-react';
 // navigate not used in this file
 import { useTheme } from '../components/Layout.jsx';
+import { getLoggedInUserProfile } from '../services/profileService';
+import { findSimilarEmployeesForFounder, findSimilarStartupsForEmployee } from '../services/matchingService';
+import { getFullEmployeeDetails } from '../services/employeeLookupService';
+import { getFullStartupDetails } from '../services/founderLookupService';
+import structureMatchOutput from '../services/structureMatchOutput';
+import { Skeleton } from '@mui/material';
 
 const Matchings = () => {
   const navigate = useNavigate();
@@ -32,6 +38,9 @@ const Matchings = () => {
   const [requiredSkills, setRequiredSkills] = useState([]);
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [matches, setMatches] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState(null);
 
   const filterOptions = [
     { id: 'all', label: 'All Matches', count: 24 },
@@ -41,82 +50,41 @@ const Matchings = () => {
     { id: 'favorites', label: 'Favorites', count: 3 }
   ];
 
-  const matches = [
-    {
-      id: 1,
-      name: 'Sarah Chen',
-      role: 'Full-Stack Developer & Tech Lead',
-      avatar: 'SC',
-      matchPercentage: 95,
-      location: 'San Francisco, CA',
-      experience: '8 years',
-      skills: ['React', 'Node.js', 'Python', 'AWS'],
-      education: 'Stanford University - CS',
-      previousCompanies: ['Google', 'Stripe'],
-      interests: ['AI/ML', 'FinTech', 'B2B SaaS'],
-      bio: 'Passionate full-stack developer with experience building scalable products at top tech companies. Looking to join an early-stage startup as a technical co-founder.',
-      isNew: true,
-      isOnline: true,
-      lastActive: '2 hours ago',
-      verified: true
-    },
-    {
-      id: 2,
-      name: 'Marcus Rodriguez',
-      role: 'Marketing & Growth Expert',
-      avatar: 'MR',
-      matchPercentage: 88,
-      location: 'New York, NY',
-      experience: '6 years',
-      skills: ['Growth Marketing', 'SEO', 'Content Strategy', 'Analytics'],
-      education: 'Wharton Business School',
-      previousCompanies: ['HubSpot', 'Mailchimp'],
-      interests: ['SaaS', 'MarTech', 'E-commerce'],
-      bio: 'Growth marketing specialist who has scaled multiple startups from 0 to $10M ARR. Seeking a co-founder opportunity in B2B SaaS.',
-      isNew: false,
-      isOnline: false,
-      lastActive: '1 day ago',
-      verified: false
-    },
-    {
-      id: 3,
-      name: 'Elena Park',
-      role: 'Product Designer & UX Lead',
-      avatar: 'EP',
-      matchPercentage: 82,
-      location: 'Seattle, WA',
-      experience: '7 years',
-      skills: ['UI/UX Design', 'Product Strategy', 'User Research', 'Prototyping'],
-      education: 'RISD - Industrial Design',
-      previousCompanies: ['Apple', 'Airbnb'],
-      interests: ['HealthTech', 'EdTech', 'Consumer Apps'],
-      bio: 'Senior product designer with a track record of creating award-winning user experiences. Looking for a co-founder role in mission-driven startups.',
-      isNew: true,
-      isOnline: true,
-      lastActive: 'Online now',
-      verified: true
-    },
-    {
-      id: 4,
-      name: 'David Kim',
-      role: 'Blockchain Engineer',
-      avatar: 'DK',
-      matchPercentage: 79,
-      location: 'Austin, TX',
-      experience: '5 years',
-      skills: ['Solidity', 'Web3', 'Smart Contracts', 'DeFi'],
-      education: 'MIT - Computer Science',
-      previousCompanies: ['Coinbase', 'ConsenSys'],
-      interests: ['DeFi', 'Web3', 'Crypto'],
-      bio: 'Blockchain engineer with deep expertise in DeFi protocols and smart contract development. Passionate about building the future of finance.',
-      isNew: false,
-      isOnline: false,
-      lastActive: '3 days ago',
-      verified: true
-    }
-  ];
+  useEffect(() => {
+    async function loadMatches() {
+      setLoading(true);
+      try {
+        const userProfile = await getLoggedInUserProfile();
+        setUserProfile(userProfile);
+        let aiResults = [];
+        const enriched = [];
 
- 
+        console.log("User Profile in Matchings:", userProfile);
+
+        if (userProfile?.role === 'founder') {
+          aiResults = await findSimilarEmployeesForFounder();
+          for (const r of aiResults) {
+            const details = await getFullEmployeeDetails(r.employeeId);
+            enriched.push(structureMatchOutput(r, details));
+          }
+        } else if (userProfile?.role === 'employee') {
+          aiResults = await findSimilarStartupsForEmployee();
+          for (const r of aiResults) {
+            const details = await getFullStartupDetails(r.startupId);
+            enriched.push(structureMatchOutput(r, details));
+          }
+        }
+
+        console.log("Enriched Matches:", enriched);
+        setMatches(enriched);
+      } catch (err) {
+        setMatches([]);
+      }
+      setLoading(false);
+    }
+    loadMatches();
+  }, []);
+
   const sortedMatches = [...matches].sort((a, b) => b.matchPercentage - a.matchPercentage);
 
   const getMatchColor = (percentage) => {
@@ -133,6 +101,59 @@ const Matchings = () => {
     return 'bg-gray-400/10 border-gray-400/30';
   };
 
+    // Skeleton for loading state
+const renderSkeletonCards = () => (
+  <div className="grid lg:grid-cols-2 gap-6">
+    {[...Array(4)].map((_, idx) => (
+      <div
+        key={idx}
+        className="bg-white/90 border border-blue-200 rounded-2xl p-6 shadow-xl relative overflow-hidden"
+      >
+        <div className="absolute top-4 right-4">
+          <Skeleton width={90} height={28} style={{ backgroundColor: "#e0e7ff" }} />
+        </div>
+        <div className="flex items-start space-x-4 mb-4 pt-8">
+          <Skeleton variant="circular" width={64} height={64} style={{ backgroundColor: "#c7d2fe" }} />
+          <div className="flex-1">
+            <Skeleton width={120} height={20} style={{ backgroundColor: "#a5b4fc" }} />
+            <Skeleton width={80} height={16} style={{ marginTop: 8, backgroundColor: "#a5b4fc" }} />
+            <Skeleton width={60} height={14} style={{ marginTop: 8, backgroundColor: "#a5b4fc" }} />
+          </div>
+        </div>
+        <Skeleton count={2} height={12} style={{ marginBottom: 12, backgroundColor: "#c7d2fe" }} />
+        <div className="mb-4">
+          <Skeleton width={60} height={14} style={{ backgroundColor: "#a5b4fc" }} />
+          <div className="flex gap-2 mt-2">
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} width={50} height={20} style={{ borderRadius: 10, backgroundColor: "#e0e7ff" }} />
+            ))}
+          </div>
+        </div>
+        <div className="mb-4">
+          <Skeleton width={60} height={14} style={{ backgroundColor: "#a5b4fc" }} />
+          <div className="flex gap-2 mt-2">
+            {[...Array(2)].map((_, i) => (
+              <Skeleton key={i} width={50} height={20} style={{ borderRadius: 10, backgroundColor: "#e0e7ff" }} />
+            ))}
+          </div>
+        </div>
+        <div className="mb-6">
+          <Skeleton width={100} height={14} style={{ backgroundColor: "#a5b4fc" }} />
+          <Skeleton width={80} height={14} style={{ marginTop: 8, backgroundColor: "#a5b4fc" }} />
+        </div>
+        <div className="flex items-center justify-between">
+          <div />
+          <div className="flex items-center space-x-2">
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} width={36} height={36} style={{ borderRadius: 8, backgroundColor: "#e0e7ff" }} />
+            ))}
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
   return (
     <div className="w-full px-6 py-8">
       
@@ -143,8 +164,8 @@ const Matchings = () => {
       >
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className={`text-3xl font-bold ${theme.text} mb-2`}>Co-Founder Matches</h1>
-            <p className={theme.textSecondary}>Find your perfect co-founder match</p>
+            <h1 className={`text-3xl font-bold ${theme.text} mb-2`}>{userProfile?.role === 'founder' ? 'Employee/Co-Founder Matches' : 'Startup Matches'}</h1>
+            <p className={theme.textSecondary}>{userProfile?.role === 'founder' ? 'Find your t co-founder/employee match' : 'Find your ideal  startup match'}</p>
             {requiredSkills && requiredSkills.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">
                 <div className={`text-sm ${theme.textMuted} mr-2 self-center`}>Requirements:</div>
@@ -177,7 +198,7 @@ const Matchings = () => {
 
       <div className="flex gap-8">
        
-        <div className="w-64 space-y-6">
+        {/* <div className="w-64 space-y-6">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -217,7 +238,7 @@ const Matchings = () => {
             <h3 className={`font-semibold ${theme.text} mb-4`}>Quick Stats</h3>
             <div className="space-y-4">
               <div>
-                <div className={`text-2xl font-bold ${theme.text}`}>24</div>
+                <div className={`text-2xl font-bold ${theme.text}`}>{sortedMatches.length}</div>
                 <div className={`text-sm ${theme.textMuted}`}>Total Matches</div>
               </div>
               <div>
@@ -230,10 +251,13 @@ const Matchings = () => {
               </div>
             </div>
           </motion.div>
-        </div>
+        </div> */}
 
         {/* Matches Grid */}
         <div className="flex-1">
+           {loading ? (
+            renderSkeletonCards()
+          ) : (
           <div className="grid lg:grid-cols-2 gap-6">
             {sortedMatches.map((match, index) => (
               <motion.div
@@ -250,20 +274,20 @@ const Matchings = () => {
                 tabIndex={0}
                 className={`${theme.cardBg} backdrop-blur-md ${theme.border} border rounded-2xl p-6 shadow-xl relative overflow-hidden cursor-pointer group`}
               >
-                {/* Match Badge */}
-                <div className={`absolute top-4 right-4 px-3 py-1 rounded-full border ${getMatchBgColor(match.matchPercentage)}`}>
-                  <div className={`flex items-center space-x-1 text-sm font-medium ${getMatchColor(match.matchPercentage)}`}>
+                {/* Match Badge with Reasoning Tooltip (only on badge hover) */}
+                <div className="absolute top-4 right-4 group/badge" style={{ cursor: 'pointer', position: 'relative' }}>
+                  <div className={`px-3 py-1 rounded-full border ${getMatchBgColor(match.matchPercentage)} flex items-center space-x-1 text-sm font-medium ${getMatchColor(match.matchPercentage)} group-hover/badge:bg-opacity-90`}
+                    >
                     <Star className="w-4 h-4" />
                     <span>{match.matchPercentage}% match</span>
                   </div>
-                </div>
-
-                {/* New Badge */}
-                {match.isNew && (
-                  <div className="absolute top-4 left-4 px-2 py-1 bg-blue-500 text-white text-xs font-medium rounded-full">
-                    New
+                  {/* Reasoning Tooltip - only on badge hover */}
+                  <div className="absolute right-0 mt-2 z-50 hidden group-hover/badge:block bg-white text-gray-800 text-xs rounded shadow-lg p-3 w-72 border border-gray-200"
+                       style={{ top: '100%', minWidth: '200px', maxWidth: '320px', whiteSpace: 'normal' }}>
+                    <div className="font-semibold mb-1 text-blue-600">Reason for Match</div>
+                    <div>{match.reasoning || 'No reasoning provided.'}</div>
                   </div>
-                )}
+                </div>
 
                 {/* Profile Header */}
                 <div className="flex items-start space-x-4 mb-4 pt-8 relative z-10">
@@ -271,9 +295,6 @@ const Matchings = () => {
                     <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
                       {match.avatar}
                     </div>
-                    {match.isOnline && (
-                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-400 rounded-full border-2 border-gray-800" />
-                    )}
                     {match.verified && (
                       <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
                         <Check className="w-3 h-3 text-white" />
@@ -290,10 +311,6 @@ const Matchings = () => {
                           <div className="flex items-center space-x-1">
                             <MapPin className="w-4 h-4" />
                             <span>{match.location}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Briefcase className="w-4 h-4" />
-                            <span>{match.experience}</span>
                           </div>
                         </div>
                       </div>
@@ -326,29 +343,39 @@ const Matchings = () => {
                   </div>
                 </div>
 
-                {/* Experience */}
-                <div className="mb-6 relative z-10">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center space-x-2">
-                      <GraduationCap className={`w-4 h-4 ${theme.textMuted}`} />
-                      <span className={theme.textMuted}>{match.education}</span>
-                    </div>
+                      {/*Interests */}
+                <div className="mb-4 relative z-10">
+                  <h4 className={`text-sm font-medium ${theme.textMuted} mb-2`}>Interests</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {match.interests.slice(0, 4).map((interest, interestIndex) => (
+                      <span
+                        key={interestIndex}
+                        className="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-full text-xs font-medium"
+                      >
+                        {interest}
+                      </span>
+                    ))}
+                    {match.interests.length > 4 && (
+                      <span className={`px-3 py-1 ${theme.cardBg} ${theme.textMuted} rounded-full text-xs`}>
+                        +{match.interests.length - 4} more
+                      </span>
+                    )}
                   </div>
+                </div>
+
+                {/* Experience/Education/Companies */}
+                <div className="mb-6 relative z-10">
                   <div className="flex items-center space-x-2 mt-1">
                     <Award className={`w-4 h-4 ${theme.textMuted}`} />
                     <span className={`text-sm ${theme.textMuted}`}>
-                      {match.previousCompanies.join(', ')}
+                      {match.previousCompanies.join(', ') || 'N/A'}
                     </span>
                   </div>
                 </div>
 
                 {/* Actions */}
                 <div className="flex items-center justify-between relative z-10">
-                  <div className={`flex items-center space-x-2 text-sm ${theme.textMuted}`}>
-                    <Calendar className="w-4 h-4" />
-                    <span>{match.lastActive}</span>
-                  </div>
-                  
+                  <div />
                   <div className="flex items-center space-x-2">
                     <button className={`p-2 rounded-lg ${theme.hover} ${theme.textMuted} transition-all`}>
                       <Eye className="w-5 h-5" />
@@ -367,9 +394,10 @@ const Matchings = () => {
               </motion.div>
             ))}
           </div>
+          )}
 
           {/* Load More */}
-          <motion.div
+          {/* <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
@@ -378,7 +406,7 @@ const Matchings = () => {
             <button className={`${theme.cardBg} backdrop-blur-md ${theme.border} border px-8 py-3 rounded-lg ${theme.textSecondary} hover:${theme.text} transition-all`}>
               Load More Matches
             </button>
-          </motion.div>
+          </motion.div> */}
         </div>
       </div>
       {/* Match Details Modal */}
@@ -420,9 +448,8 @@ const Matchings = () => {
               <div>
                 <h4 className={`text-sm font-medium ${theme.textMuted} mb-2`}>Profile Details</h4>
                 <div className={`text-sm ${theme.textSecondary} space-y-2`}>
-                  <div><strong>Experience:</strong> {selectedMatch.experience}</div>
-                  <div><strong>Education:</strong> {selectedMatch.education}</div>
-                  <div><strong>Previous Companies:</strong> {selectedMatch.previousCompanies.join(', ')}</div>
+                  {selectedMatch.previousCompanies.length > 0 &&  <div><strong>Previous Companies:</strong> {selectedMatch.previousCompanies.join(', ')}</div>}
+                 
                   <div><strong>Interests:</strong> {selectedMatch.interests.join(', ')}</div>
                   <div className="pt-2"><strong>Bio:</strong> <div className={`${theme.textSecondary} text-sm`}>{selectedMatch.bio}</div></div>
                 </div>
